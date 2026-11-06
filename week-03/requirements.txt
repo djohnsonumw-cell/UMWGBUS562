@@ -1,0 +1,4 @@
+anthropic>=2.6
+chromadb>=1.5
+beautifulsoup4>=4.12
+pymupdf>=1.24

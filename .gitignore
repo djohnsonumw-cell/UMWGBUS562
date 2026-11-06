@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Week 3 RAG tool: local Chroma database (rebuild with: ask.py --rebuild)
+week-03/chroma_db/
