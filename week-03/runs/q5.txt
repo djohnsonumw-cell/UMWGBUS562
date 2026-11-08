@@ -1,0 +1,30 @@
+Rank 1 | similarity 0.510 | source funds-availability-policy.html
+Larkfield Credit Union - Funds Availability Policy
+Section: Mobile check deposits
+About this document: Version 3 (current). Owner: Deposit Operations.
+
+Checks deposited with the Larkfield mobile app follow the same availability as checks deposited at a branch. A member can deposit up to $5,000 per business day through the mobile app. Members should keep the paper check for 30 days after a mobile deposit, then destroy it.
+
+Rank 2 | similarity 0.475 | source funds-availability-policy.html
+Larkfield Credit Union - Funds Availability Policy
+Section: Check deposits
+About this document: Version 3 (current). Owner: Deposit Operations.
+
+For checks deposited at a branch or a Larkfield ATM, the first $275 of the day's check deposits is available on the next business day. The rest of the day's check deposits is available on the second business day after the day of deposit.
+
+Rank 3 | similarity 0.442 | source card-dispute-procedure.html
+Larkfield Credit Union - Debit Card Dispute Procedure
+Section: How much the member may have to pay
+About this document: Version 4 (current). Owner: Card Services.
+
+A member's share of the loss from unauthorized debit card transactions depends on how quickly they report it. If the member reports a lost or stolen card within two business days of learning about it, they pay no more than $50. If they report it later than that, they may pay up to $500. If unauthorized transactions appear on a statement and the member does not report them within 60 days after the statement was sent, they may have to pay for transactions after those 60 days in full.
+
+Rank 4 | similarity 0.421 | source funds-availability-policy.html
+Larkfield Credit Union - Funds Availability Policy
+Section: Longer holds
+About this document: Version 3 (current). Owner: Deposit Operations.
+
+Larkfield may hold check deposits for up to seven business days when the day's check deposits total more than $6,000, when the account has been open fewer than 30 days, when the account has been overdrawn repeatedly in the last six months, or when there is reason to doubt the check will be paid. The member is told about a longer hold when the deposit is made, or by mail if the hold is placed later.
+
+ANSWER
+On the next business day, $275 of the deposit is available; the remaining amount becomes available on the second business day after the day of deposit [funds-availability-policy.html].

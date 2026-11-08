@@ -1,16 +1,19 @@
-"""Answer questions about Copperline Manufacturing's finance documents with RAG.
+"""Answer questions about a folder of documents with RAG.
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-03\\ask.py "How much can I spend on dinner in Boston?"
     .venv\\Scripts\\python.exe week-03\\ask.py            # interactive: ask several questions
     .venv\\Scripts\\python.exe week-03\\ask.py --rebuild  # re-index after adding/removing documents
+    .venv\\Scripts\\python.exe week-03\\ask.py --docs week-03\\larkfield-docs "What is the wire fee?"
+    .venv\\Scripts\\python.exe week-03\\ask.py "..." --save week-03\\runs\\q1.txt
 
 How it works:
-1. Every document in copperline-docs/ (HTML, PDF, Markdown, plain text) is split
-   into one chunk per section. Each chunk starts with the document title and the
-   section heading, so it makes sense on its own.
-2. The chunks are stored in a Chroma database (chroma_db/) using Chroma's
-   built-in embedding model.
+1. Every document in the folder (HTML, PDF, Markdown, plain text) is split into
+   one chunk per section. Each chunk starts with the document title and the
+   section heading, so it makes sense on its own. The folder defaults to
+   week-03/copperline-docs; choose another with --docs.
+2. The chunks are stored in a Chroma database using Chroma's built-in embedding
+   model. Each document folder gets its own database, in chroma_db/<folder name>/.
 3. For a question, the 4 most similar chunks are retrieved and sent to Claude,
    which answers only from those sources and cites the source file for each fact.
 """
@@ -30,10 +33,9 @@ from bs4 import BeautifulSoup
 from chromadb.config import Settings
 
 HERE = Path(__file__).resolve().parent
-DOCS_DIR = HERE / "copperline-docs"
-DB_DIR = HERE / "chroma_db"
-MANIFEST = DB_DIR / "manifest.json"
-COLLECTION = "copperline_docs"
+DEFAULT_DOCS = HERE / "copperline-docs"
+DB_ROOT = HERE / "chroma_db"  # one subfolder per document folder; git-ignored
+COLLECTION = "documents"
 
 # The API key lives in the folder that contains the repository, never in the repo.
 KEY_FILES = [HERE.parents[1] / "API-Key.txt", HERE.parents[1] / "API Key.txt"]
@@ -60,9 +62,8 @@ CONTEXT_TERMS = {
     ],
 }
 
-SYSTEM_PROMPT = """You answer employees' questions about Copperline Manufacturing's \
-finance policies. You are given numbered sources retrieved from the company's \
-finance documents.
+SYSTEM_PROMPT = """You answer questions about an organization's policies and \
+procedures. You are given numbered sources retrieved from its documents.
 
 Rules:
 - Answer only from the sources provided. Do not use outside knowledge or guess.
@@ -328,26 +329,34 @@ def chunk_document(path):
     return chunks
 
 
-def doc_files():
-    return sorted(p for p in DOCS_DIR.iterdir() if p.is_file() and not p.name.startswith("."))
+def doc_files(docs_dir):
+    return sorted(p for p in docs_dir.iterdir() if p.is_file() and not p.name.startswith("."))
 
 
-def fingerprint():
-    return {p.name: [p.stat().st_size, int(p.stat().st_mtime)] for p in doc_files()}
+def fingerprint(docs_dir):
+    return {
+        "docs_dir": str(docs_dir),
+        "files": {p.name: [p.stat().st_size, int(p.stat().st_mtime)] for p in doc_files(docs_dir)},
+    }
 
 
 # ---------------------------------------------------------------------------
-# Chroma database
+# Chroma database: one per document folder, in chroma_db/<folder name>/
 # ---------------------------------------------------------------------------
 
-def open_db():
-    return chromadb.PersistentClient(path=str(DB_DIR), settings=Settings(anonymized_telemetry=False))
+def db_dir(docs_dir):
+    return DB_ROOT / docs_dir.name
 
 
-def build_index():
-    print(f"Indexing documents in {DOCS_DIR.name}/ ...")
+def open_db(docs_dir):
+    return chromadb.PersistentClient(path=str(db_dir(docs_dir)),
+                                     settings=Settings(anonymized_telemetry=False))
+
+
+def build_index(docs_dir):
+    print(f"Indexing documents in {docs_dir.name}/ ...")
     all_chunks, seen = [], set()
-    for path in doc_files():
+    for path in doc_files(docs_dir):
         if path.suffix.lower() not in SUPPORTED:
             print(f"  skipped {path.name}: unsupported file type {path.suffix or '(none)'}")
             continue
@@ -367,7 +376,7 @@ def build_index():
         print(f"  {path.name}: {len(kept)} chunks")
         all_chunks.extend(kept)
 
-    client = open_db()
+    client = open_db(docs_dir)
     try:
         client.delete_collection(COLLECTION)
     except Exception:
@@ -379,18 +388,26 @@ def build_index():
             documents=[c["text"] for c in all_chunks],
             metadatas=[{k: c[k] for k in ("source", "title", "section")} for c in all_chunks],
         )
-    MANIFEST.write_text(json.dumps(fingerprint(), indent=2), encoding="utf-8")
-    print(f"Stored {len(all_chunks)} chunks in {DB_DIR.name}/.\n")
+    manifest = db_dir(docs_dir) / "manifest.json"
+    manifest.write_text(json.dumps(fingerprint(docs_dir), indent=2), encoding="utf-8")
+    print(f"Stored {len(all_chunks)} chunks in {db_dir(docs_dir).relative_to(HERE)}.\n")
     return collection
 
 
-def get_collection():
-    if not MANIFEST.exists():
-        return build_index()
-    if json.loads(MANIFEST.read_text(encoding="utf-8")) != fingerprint():
+def get_collection(docs_dir):
+    manifest = db_dir(docs_dir) / "manifest.json"
+    if not manifest.exists():
+        return build_index(docs_dir)
+    saved = json.loads(manifest.read_text(encoding="utf-8"))
+    if saved.get("docs_dir") != str(docs_dir):
+        # Two different folders with the same name would share a database.
+        print(f"Note: chroma_db/{db_dir(docs_dir).name} was built from a different "
+              f"folder named {docs_dir.name}; rebuilding it.\n")
+        return build_index(docs_dir)
+    if saved != fingerprint(docs_dir):
         print("Note: the documents have changed since the index was built. "
               "Run with --rebuild to update it.\n")
-    return open_db().get_collection(COLLECTION)
+    return open_db(docs_dir).get_collection(COLLECTION)
 
 
 # ---------------------------------------------------------------------------
@@ -419,13 +436,21 @@ def retrieve(collection, question):
     return hits
 
 
-def print_hits(hits):
-    print(f"Top {len(hits)} chunks:")
+def format_hits(hits):
+    lines = [f"Top {len(hits)} chunks:"]
     for rank, h in enumerate(hits, 1):
-        preview = clean(h["text"])[:PREVIEW_CHARS]
-        print(f"  {rank}. similarity {h['similarity']:.3f} | {h['source']}")
-        print(f"     {preview}...")
-    print()
+        lines.append(f"  {rank}. similarity {h['similarity']:.3f} | {h['source']}")
+        lines.append(f"     {clean(h['text'])[:PREVIEW_CHARS]}...")
+    return "\n".join(lines)
+
+
+def format_saved(hits, answer_text):
+    """The --save file: each retrieved chunk in full, then ANSWER, then the answer."""
+    parts = [
+        f"Rank {rank} | similarity {h['similarity']:.3f} | source {h['source']}\n{h['text']}"
+        for rank, h in enumerate(hits, 1)
+    ]
+    return "\n\n".join(parts) + "\n\nANSWER\n" + answer_text + "\n"
 
 
 def answer(client, question, hits):
@@ -444,19 +469,24 @@ def answer(client, question, hits):
     return "".join(b.text for b in message.content if b.type == "text").strip()
 
 
-def ask(collection, client, question):
+def ask(collection, client, question, save_path=None):
     hits = retrieve(collection, question)
-    print_hits(hits)
+    print(format_hits(hits) + "\n")
     try:
-        print("Answer:\n" + answer(client, question, hits) + "\n")
+        answer_text = answer(client, question, hits)
     except anthropic.AuthenticationError:
-        print("Claude rejected the API key. Check the key file.\n")
+        answer_text = "Error: Claude rejected the API key. Check the key file."
     except anthropic.RateLimitError:
-        print("Rate limited by the Claude API. Wait a moment and try again.\n")
+        answer_text = "Error: rate limited by the Claude API. Wait a moment and try again."
     except anthropic.APIStatusError as exc:
-        print(f"Claude API error {exc.status_code}: {exc.message}\n")
+        answer_text = f"Error: Claude API error {exc.status_code}: {exc.message}"
     except anthropic.APIConnectionError:
-        print("Could not reach the Claude API. Check your internet connection.\n")
+        answer_text = "Error: could not reach the Claude API. Check your internet connection."
+    print("Answer:\n" + answer_text + "\n")
+    if save_path:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        save_path.write_text(format_saved(hits, answer_text), encoding="utf-8")
+        print(f"Saved this run to {save_path}")
 
 
 def main():
@@ -465,19 +495,29 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("question", nargs="*", help="your question (omit to ask interactively)")
+    parser.add_argument("--docs", type=Path, default=DEFAULT_DOCS,
+                        help="folder of documents to answer from (default: week-03/copperline-docs)")
     parser.add_argument("--rebuild", action="store_true",
                         help="rebuild the database after adding or removing documents")
+    parser.add_argument("--save", type=Path, metavar="FILE",
+                        help="also write the retrieved chunks and the answer to FILE (UTF-8)")
     args = parser.parse_args()
 
-    collection = build_index() if args.rebuild else get_collection()
+    docs_dir = args.docs.resolve()
+    if not docs_dir.is_dir():
+        sys.exit(f"Document folder not found: {args.docs}")
+    if args.save and not args.question:
+        sys.exit("--save needs a question on the command line.")
+
+    collection = build_index(docs_dir) if args.rebuild else get_collection(docs_dir)
     if args.rebuild and not args.question:
         return
 
     client = anthropic.Anthropic(api_key=load_api_key())
     if args.question:
-        ask(collection, client, " ".join(args.question))
+        ask(collection, client, " ".join(args.question), args.save)
         return
-    print("Ask a question about Copperline's finance documents (blank line to quit).")
+    print(f"Ask a question about the documents in {docs_dir.name}/ (blank line to quit).")
     while True:
         try:
             question = input("\nQuestion: ").strip()
