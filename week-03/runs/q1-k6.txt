@@ -1,0 +1,46 @@
+Rank 1 | similarity 0.685 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Overdraft and returned item fees
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+When Larkfield pays a check, debit card purchase, or automatic payment that overdraws a member's checking account, the overdraft fee is $29 per item paid. When Larkfield returns an item unpaid because the account does not have enough money, the returned item fee is $29 per item returned. No more than three overdraft or returned item fees are charged to one account in a single business day.
+No overdraft fee is charged if the account is overdrawn by $10 or less at the end of the business day.
+Members can link a savings account for overdraft transfers. An overdraft transfer from a linked savings account is free.
+
+Rank 2 | similarity 0.510 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Dormant accounts
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+An account with no member-initiated activity for 24 months becomes dormant. A dormant account with a balance under $500 is charged $5 per month. Any deposit or withdrawal by the member ends dormant status.
+
+Rank 3 | similarity 0.507 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Checking account monthly fees
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+Everyday Checking has no monthly service fee. Plus Checking has a monthly service fee of $8. The Plus Checking fee is waived for any month in which the account keeps a minimum daily balance of $1,000, or receives direct deposits totaling $500 or more.
+
+Rank 4 | similarity 0.480 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Statements and account research
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+Electronic statements are free. Paper statements cost $2 per month. Account research, such as finding an old transaction or reconciling an account, costs $20 per hour with a one-hour minimum. A copy of a paid check costs $3.
+
+Rank 5 | similarity 0.478 | source fee-refund-guide.html
+Larkfield Credit Union - Fee Refund Guide for Member Service Staff
+Section: Refunds that need a branch manager
+About this document: Version 2 (current). Owner: Member Services.
+
+A refund needs the branch manager's approval when the fee is more than $30, when the member has already had a refund in the last 90 days, or when the member asks for several fees to be refunded at once. A branch manager may approve refunds of up to $150 in total for one member in any 90-day period.
+
+Rank 6 | similarity 0.469 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Stop payments
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+A stop payment on a check costs $30 per request. One request can cover a single check or a series of checks with consecutive numbers. A stop payment stays in effect for six months and can be renewed for another $30.
+
+ANSWER
+The overdraft fee is $29 per item paid when Larkfield pays a check, debit card purchase, or automatic payment that overdraws a member's checking account [consumer-fee-schedule.html]. No more than three overdraft or returned item fees are charged to one account per business day [consumer-fee-schedule.html]. No overdraft fee is charged if the account is overdrawn by $10 or less at the end of the business day [consumer-fee-schedule.html]. If the member has a linked savings account, an overdraft transfer from it is free [consumer-fee-schedule.html].

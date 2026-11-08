@@ -1,0 +1,48 @@
+Rank 1 | similarity 0.587 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: ATM and debit card fees
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+Withdrawals at Larkfield ATMs and at CO-OP network ATMs are free. A withdrawal at any other ATM costs $2, and the ATM's owner may charge its own fee as well. A replacement debit card costs $10, or $30 with rush delivery. A replacement card is free when the old card was reported lost or stolen because of fraud.
+
+Rank 2 | similarity 0.525 | source card-dispute-procedure.html
+Larkfield Credit Union - Debit Card Dispute Procedure
+Section: How much the member may have to pay
+About this document: Version 4 (current). Owner: Card Services.
+
+A member's share of the loss from unauthorized debit card transactions depends on how quickly they report it. If the member reports a lost or stolen card within two business days of learning about it, they pay no more than $50. If they report it later than that, they may pay up to $500. If unauthorized transactions appear on a statement and the member does not report them within 60 days after the statement was sent, they may have to pay for transactions after those 60 days in full.
+
+Rank 3 | similarity 0.458 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Overdraft and returned item fees
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+When Larkfield pays a check, debit card purchase, or automatic payment that overdraws a member's checking account, the overdraft fee is $29 per item paid. When Larkfield returns an item unpaid because the account does not have enough money, the returned item fee is $29 per item returned. No more than three overdraft or returned item fees are charged to one account in a single business day.
+No overdraft fee is charged if the account is overdrawn by $10 or less at the end of the business day.
+Members can link a savings account for overdraft transfers. An overdraft transfer from a linked savings account is free.
+
+Rank 4 | similarity 0.452 | source card-dispute-procedure.html
+Larkfield Credit Union - Debit Card Dispute Procedure
+Section: When a member reports a transaction they did not make
+About this document: Version 4 (current). Owner: Card Services.
+
+When a member says a debit card transaction on their account was not made or authorized by them, freeze the card right away in the card system, then open a dispute case. Order a replacement card. The replacement is free when the card was used for fraud.
+
+Rank 5 | similarity 0.427 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Statements and account research
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+Electronic statements are free. Paper statements cost $2 per month. Account research, such as finding an old transaction or reconciling an account, costs $20 per hour with a one-hour minimum. A copy of a paid check costs $3.
+
+Rank 6 | similarity 0.421 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Official checks and money orders
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+A cashier's check costs $8. A money order costs $3. Members can buy up to five money orders in one day.
+
+ANSWER
+Rush delivery for a replacement debit card costs $30 [consumer-fee-schedule.html]. (This is in addition to the standard $10 replacement fee — rush delivery is $30 total, not $10 + $30 — per the fee schedule: "A replacement debit card costs $10, or $30 with rush delivery.") [consumer-fee-schedule.html]
+
+Note: if the original card was lost or stolen due to fraud, the replacement is free, but the sources do not specify whether rush delivery is also waived in that case [consumer-fee-schedule.html][card-dispute-procedure.html].

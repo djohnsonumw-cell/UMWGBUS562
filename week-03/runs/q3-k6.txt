@@ -1,0 +1,45 @@
+Rank 1 | similarity 0.592 | source card-dispute-procedure.html
+Larkfield Credit Union - Debit Card Dispute Procedure
+Section: How much the member may have to pay
+About this document: Version 4 (current). Owner: Card Services.
+
+A member's share of the loss from unauthorized debit card transactions depends on how quickly they report it. If the member reports a lost or stolen card within two business days of learning about it, they pay no more than $50. If they report it later than that, they may pay up to $500. If unauthorized transactions appear on a statement and the member does not report them within 60 days after the statement was sent, they may have to pay for transactions after those 60 days in full.
+
+Rank 2 | similarity 0.488 | source card-dispute-procedure.html
+Larkfield Credit Union - Debit Card Dispute Procedure
+Section: When a member reports a transaction they did not make
+About this document: Version 4 (current). Owner: Card Services.
+
+When a member says a debit card transaction on their account was not made or authorized by them, freeze the card right away in the card system, then open a dispute case. Order a replacement card. The replacement is free when the card was used for fraud.
+
+Rank 3 | similarity 0.417 | source card-dispute-procedure.html
+Larkfield Credit Union - Debit Card Dispute Procedure
+Section: Provisional credit
+About this document: Version 4 (current). Owner: Card Services.
+
+Larkfield investigates every dispute. If the investigation is not finished within 10 business days, the member receives a provisional credit for the disputed amount while it continues. If the investigation finds the transaction was authorized, the provisional credit is reversed and the member is told in writing.
+
+Rank 4 | similarity 0.413 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: ATM and debit card fees
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+Withdrawals at Larkfield ATMs and at CO-OP network ATMs are free. A withdrawal at any other ATM costs $2, and the ATM's owner may charge its own fee as well. A replacement debit card costs $10, or $30 with rush delivery. A replacement card is free when the old card was reported lost or stolen because of fraud.
+
+Rank 5 | similarity 0.394 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Overdraft and returned item fees
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+When Larkfield pays a check, debit card purchase, or automatic payment that overdraws a member's checking account, the overdraft fee is $29 per item paid. When Larkfield returns an item unpaid because the account does not have enough money, the returned item fee is $29 per item returned. No more than three overdraft or returned item fees are charged to one account in a single business day.
+No overdraft fee is charged if the account is overdrawn by $10 or less at the end of the business day.
+Members can link a savings account for overdraft transfers. An overdraft transfer from a linked savings account is free.
+
+Rank 6 | similarity 0.378 | source card-dispute-procedure.html
+Larkfield Credit Union - Debit Card Dispute Procedure
+Section: Contact
+
+Larkfield Credit Union Member Services. Questions about this document: memberservices@larkfield.example
+
+ANSWER
+If the member reports a lost or stolen card within two business days of learning about it, their liability is no more than $50 [card-dispute-procedure.html]. Since they called the same day they lost their wallet, that falls within the two-day window, so they could owe up to $50 for fraudulent spending [card-dispute-procedure.html].

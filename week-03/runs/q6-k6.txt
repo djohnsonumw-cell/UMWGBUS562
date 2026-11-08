@@ -1,0 +1,52 @@
+Rank 1 | similarity 0.271 | source share-certificates.html
+Larkfield Credit Union - Share Certificates
+Section: Dividend rates
+About this document: Version 5 (current). Owner: Deposit Products.
+
+- 6-month share certificate: 3.05% annual percentage yield (APY).
+- 12-month share certificate: 3.40% APY.
+- 24-month share certificate: 3.55% APY.
+- 36-month share certificate: 3.60% APY.
+- 60-month share certificate: 3.75% APY.
+The rate is fixed when the certificate is opened and does not change during the term. Dividends are paid monthly and can stay in the certificate or be transferred to the member's savings or checking account.
+
+Rank 2 | similarity 0.244 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Stop payments
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+A stop payment on a check costs $30 per request. One request can cover a single check or a series of checks with consecutive numbers. A stop payment stays in effect for six months and can be renewed for another $30.
+
+Rank 3 | similarity 0.230 | source share-certificates.html
+Larkfield Credit Union - Share Certificates
+Section: At maturity
+About this document: Version 5 (current). Owner: Deposit Products.
+
+When a share certificate matures, it renews automatically for the same term at the rate in effect on the renewal day. The member has a 10-day grace period after maturity to withdraw the money or change the term with no penalty.
+
+Rank 4 | similarity 0.225 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Checking account monthly fees
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+Everyday Checking has no monthly service fee. Plus Checking has a monthly service fee of $8. The Plus Checking fee is waived for any month in which the account keeps a minimum daily balance of $1,000, or receives direct deposits totaling $500 or more.
+
+Rank 5 | similarity 0.209 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Statements and account research
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+Electronic statements are free. Paper statements cost $2 per month. Account research, such as finding an old transaction or reconciling an account, costs $20 per hour with a one-hour minimum. A copy of a paid check costs $3.
+
+Rank 6 | similarity 0.193 | source consumer-fee-schedule.html
+Larkfield Credit Union - Consumer Fee Schedule
+Section: Wire transfers
+About this document: Version 8 (current). Replaces Version 7. Owner: Member Services.
+
+- Incoming domestic wire transfer: $10.
+- Incoming international wire transfer: $15.
+- Outgoing domestic wire transfer: $25.
+- Outgoing international wire transfer: $45. The receiving bank or an intermediary bank may deduct its own fees from the amount sent.
+
+ANSWER
+The provided documents don't answer this question. They cover share certificate dividend rates, consumer fees, and checking account policies, but contain no information about mortgage rates [share-certificates.html] [consumer-fee-schedule.html].

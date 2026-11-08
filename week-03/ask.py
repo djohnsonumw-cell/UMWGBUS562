@@ -14,7 +14,7 @@ How it works:
    week-03/copperline-docs; choose another with --docs.
 2. The chunks are stored in a Chroma database using Chroma's built-in embedding
    model. Each document folder gets its own database, in chroma_db/<folder name>/.
-3. For a question, the 4 most similar chunks are retrieved and sent to Claude,
+3. For a question, the 6 most similar chunks are retrieved and sent to Claude,
    which answers only from those sources and cites the source file for each fact.
 """
 
@@ -41,7 +41,7 @@ COLLECTION = "documents"
 KEY_FILES = [HERE.parents[1] / "API-Key.txt", HERE.parents[1] / "API Key.txt"]
 
 MODEL = "claude-sonnet-5"
-TOP_K = 4
+TOP_K = 6
 PREVIEW_CHARS = 150
 
 # Sections longer than this are split at paragraph boundaries into parts.
@@ -72,7 +72,7 @@ example [travel-expense-policy.html].
 - If the sources do not contain the answer, say clearly that the documents \
 provided don't answer the question. If they answer only part of it, answer that \
 part and say what is missing.
-- Keep the answer short and direct."""
+- Keep the answer short and direct, concise yet comprehensive"""
 
 
 # ---------------------------------------------------------------------------
