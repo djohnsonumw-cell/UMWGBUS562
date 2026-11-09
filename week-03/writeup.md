@@ -1,6 +1,6 @@
 \## What I Built
 
-I build a RAG tool for Larkfield's Credit Union. The RAG tool is used to assist with answering questions from member services. I edited the ask.py by adding "concise yet comprehensive" to the last rule in the rules section. I did this so that the tool can return a more thorough answer. I also edited the tool to return 6 chunks instead of 4 so that it can possible return the needed information for q5 but the change did not produce the needed results. 
+I build a RAG tool for Larkfield's Credit Union. The RAG tool is used to assist with answering questions from member services. I edited the ask.py by adding "concise yet comprehensive" to the last rule in the rules section. I did this so that the tool can return a more thorough answer. I also edited the tool to return 6 chunks instead of 4 so that it can possible return the needed information for q5 but the change did not produce the needed results.
 
 
 
@@ -10,11 +10,11 @@ Four labeled lines. If you aren't sure how your tool chunks, ask Claude Code, or
 
 Chunking method: Structure method because it is more organized and it appears to captures what is needed the best. It captures the whole section instead of cutting things of mid-sentence or mid-paragraph.
 
-Makes sense on its own: do your chunks make sense when read alone? Yes because it takes the section from the document verbatim therefore it reads naturally. 
+Makes sense on its own: do your chunks make sense when read alone? Yes because it takes the section from the document verbatim therefore it reads naturally.
 
 Label and source: do your chunks carry a label (the document's title and section heading) and their source file? Yes my chunks carry both the label and source file. When an answer is returned, the chunk returns the title, section, and document.
 
-Short enough: are your chunks short enough for the embedding model to read in full (about 190 words)? Start with Yes because Chroma is set to have a 256 limit for each chunk and 132 is the highest amount of words in a chunk from the Larkfield documents. 
+Short enough: are your chunks short enough for the embedding model to read in full (about 190 words)? Yes, because Chroma is set to have a 256 token limit for each chunk and 177 token (132 words) is the highest amount in a chunk from the Larkfield documents.
 
 &#x20;
 
@@ -124,15 +124,11 @@ No. The outgoing international wire transfer fee is $45 \[consumer-fee-schedule.
 
 Four labeled lines, about Questions 1 and 6.
 
-What was wrong: There were two documents labeled as consumer-fee-schedule which resulted in an error. There is version 7 and a version 8. Once I discovered the error. 
+What was wrong: There were two documents labeled as consumer-fee-schedule which resulted in an error. There is version 7 and a version 8. Once I discovered the error.
 
 How I fixed it: I removed version 7 and rebuilt the database therefore the tool will only pull from the most updated document which in this case is version 8.
 
 Prevention: Including the version label in the document name would help Larkfield because the tool will be able to pull from the most updated version if instructed to do so. I think this will also be helpful if the company needs to refer to older versions, simply stating the specific allows the assistant to know exactly where to retrieve from.
 
-Question 6: Declined. The assistant stated that there were no documents that were able to answer the question. It stated that the top chunk was "Dividend rates" for share certificates (0.271) but instead of guessing and giving a percentage from that section to sound confident, it notified us that there were no documents that can provide the answer like instructed. 
-
-
-
-
+Question 6: Declined. The assistant stated that there were no documents that were able to answer the question. It stated that the top chunk was "Dividend rates" for share certificates (0.271) but instead of guessing and giving a percentage from that section to sound confident, it notified us that there were no documents that can provide the answer like instructed.
 
