@@ -221,3 +221,6 @@ __marimo__/
 
 # Week 3 RAG tool: local Chroma database (rebuild with: ask.py --rebuild)
 week-03/chroma_db/
+
+# Week 4 MCP server: local Chroma database (rebuild with: hr_mcp_server.py --rebuild)
+week-04/chroma_db/
