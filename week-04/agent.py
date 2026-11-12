@@ -1,29 +1,38 @@
 """Hartwell Foods HR agent: drafts replies to employee emails using Claude tool use.
 
-Two ways to run it:
+Three ways to run it:
 
   --email PATH   Handle one .eml file. The draft is written to week-04/drafts/.
   --inbox        Sign in to the Gmail sandbox with IMAP (same login as load_inbox.py)
                  and handle each unread inbox email, one at a time, as its own agent
                  run. Each email is marked read before work starts, so none is handled
-                 twice. The draft is created as a real Gmail draft that replies in the
-                 same thread. Drafts that need review get the Gmail label
-                 "Needs HR Review" (on the draft and the original email); the subject
-                 is left as "Re: ..." so the thread isn't split.
-
-For each email the agent:
-  1. reads the sender's address from the From: header,
-  2. starts hr_mcp_server.py in employee mode (--as-employee <sender>), so Claude can
-     look up only that sender's leave balance,
-  3. offers Claude the server's tools plus save_reply, which saves a draft (local file
-     or Gmail draft). Nothing is ever sent: this program has no way to send email.
-  4. loops until Claude stops asking for tools or 10 tool calls have run.
+                 twice. The reply is created as a real Gmail draft in the same thread.
+                 Drafts that need review get the Gmail label "Needs HR Review" (on the
+                 draft and the original email); the subject is left as "Re: ..." so the
+                 thread isn't split. Nothing is sent.
+  --watch        Check the inbox every 30 seconds and handle new unread email as in
+                 --inbox, with these rules enforced here in code (not by Claude):
+                   * Only senders in Agent-Allowlist.txt (beside Agent-Email.txt) are
+                     handled. Each line is "your.address@gmail.com = employee@...".
+                     Mail from anyone else is left unread and never shown to Claude.
+                   * An allowed sender is treated as the employee on their line.
+                   * The sender must pass Gmail's DMARC check (or SPF and DKIM), so a
+                     forged From: line can't trigger a reply.
+                   * Automatic mail (Auto-Submitted other than "no", or Precedence
+                     bulk/auto_reply) is left unread.
+                   * After save_reply, a reply with needs_human_review false is sent
+                     with Gmail SMTP; otherwise it's kept as a labeled draft. Claude has
+                     no send tool.
+                   * At most 5 replies are sent, then it stops. Ctrl+C also stops it.
+                   * Your real addresses and the password are replaced with <hidden>
+                     in everything printed or saved with --save.
 
 Add --save FILE to also write everything printed to FILE (UTF-8).
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-04\\agent.py --email week-04\\hartwell-hr\\sample-emails\\03-megan-time-off.eml
-    .venv\\Scripts\\python.exe week-04\\agent.py --inbox --save inbox-run.txt
+    .venv\\Scripts\\python.exe week-04\\agent.py --inbox --save week-04\\runs\\inbox-run.txt
+    .venv\\Scripts\\python.exe week-04\\agent.py --watch --save week-04\\runs\\watch-run.txt
 
 The API key comes from the ANTHROPIC_API_KEY environment variable, or else from
 "API Key.txt" in the folder above the repository. The Gmail login comes from
@@ -37,7 +46,9 @@ import imaplib
 import json
 import os
 import re
+import smtplib
 import sys
+import time
 from datetime import datetime
 from email import policy
 from email.message import EmailMessage
@@ -58,12 +69,17 @@ SYSTEM_PROMPT_FILE = HERE / "hartwell-hr" / "system_prompt.txt"
 DRAFTS_DIR = HERE / "drafts"
 SERVER_LOG = HERE / "mcp_server.log"  # *.log is git-ignored
 KEY_FILES = [REPO.parent / "API Key.txt", REPO.parent / "API-Key.txt"]
+ALLOWLIST_FILE = LOGIN_FILE.parent / "Agent-Allowlist.txt"
 
 MODEL = "claude-sonnet-5"
 MAX_TOOL_CALLS = 10
 MAX_TOKENS = 16000
 PREVIEW_CHARS = 300
 REVIEW_LABEL = "Needs HR Review"  # Gmail label for drafts that need a person in HR
+SMTP_HOST = "smtp.gmail.com"
+POLL_SECONDS = 30
+MAX_SENT = 5
+AUTO_PRECEDENCE = {"bulk", "auto_reply"}
 RULE = "=" * 70
 
 SAVE_REPLY_TOOL = {
@@ -95,9 +111,20 @@ SAVE_REPLY_TOOL = {
     "strict": True,
 }
 
+# In --watch mode, tell Claude the truth: an unflagged reply goes out without review.
+WATCH_SAVE_REPLY_TOOL = {
+    **SAVE_REPLY_TOOL,
+    "description": (
+        "Save the finished reply to the employee. Call it exactly once, when the reply "
+        "is complete. If needs_human_review is false, the reply may be emailed to the "
+        "employee automatically, without a person reading it first. If it is true, it "
+        "is kept as a draft for HR. If you're unsure, set needs_human_review to true."
+    ),
+}
+
 
 # ---------------------------------------------------------------------------
-# Setup helpers
+# Output helpers
 # ---------------------------------------------------------------------------
 
 class Tee:
@@ -119,6 +146,36 @@ class Tee:
         return getattr(self.stream, name)
 
 
+class Redactor:
+    """Replace secrets (real addresses, password) with <hidden> in everything written."""
+
+    def __init__(self, stream, secrets):
+        self.stream = stream
+        values = sorted({s for s in secrets if s and len(s) >= 4}, key=len, reverse=True)
+        self.patterns = [re.compile(re.escape(v), re.IGNORECASE) for v in values]
+
+    def write(self, text):
+        for pattern in self.patterns:
+            text = pattern.sub("<hidden>", text)
+        self.stream.write(text)
+        return len(text)
+
+    def flush(self):
+        self.stream.flush()
+
+    def __getattr__(self, name):
+        return getattr(self.stream, name)
+
+
+def preview(text, limit=PREVIEW_CHARS):
+    text = text.replace("\r", "")
+    return text if len(text) <= limit else text[:limit] + "..."
+
+
+# ---------------------------------------------------------------------------
+# Setup helpers
+# ---------------------------------------------------------------------------
+
 def load_api_key():
     """The key from ANTHROPIC_API_KEY, or from the key file outside the repo."""
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -133,6 +190,26 @@ def load_api_key():
              f"'{KEY_FILES[0].name}' in {REPO.parent}.")
 
 
+def read_allowlist(path):
+    """{real address: employee address} from 'real = employee' lines. Never echoes values."""
+    if not path.is_file():
+        sys.exit(f"Allowlist not found: {path.name} should be beside {LOGIN_FILE.name}.")
+    allow = {}
+    for n, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.count("=") != 1:
+            sys.exit(f"{path.name} line {n}: expected 'your.address@gmail.com = employee address'.")
+        real, employee = (parseaddr(part.strip())[1].strip().lower() for part in line.split("="))
+        if "@" not in real or "@" not in employee:
+            sys.exit(f"{path.name} line {n}: both sides need an email address.")
+        allow[real] = employee
+    if not allow:
+        sys.exit(f"{path.name} has no entries.")
+    return allow
+
+
 def parse_email(raw, label):
     """Turn raw message bytes into the fields the agent needs."""
     msg = BytesParser(policy=policy.default).parsebytes(raw)
@@ -142,7 +219,6 @@ def parse_email(raw, label):
     return {
         "label": label,
         "sender": address.strip().lower(),
-        "from_header": str(msg.get("From", "")).strip(),
         "subject": str(msg.get("Subject", "")).strip(),
         "body": body.strip(),
         "message_id": str(msg.get("Message-ID", "")).strip(),
@@ -150,15 +226,29 @@ def parse_email(raw, label):
     }
 
 
+def is_automatic(headers):
+    """Auto-Submitted (anything but 'no', per RFC 3834) or Precedence bulk/auto_reply."""
+    auto = str(headers.get("Auto-Submitted", "")).strip().lower()
+    if auto and auto != "no":
+        return True
+    return str(headers.get("Precedence", "")).strip().lower() in AUTO_PRECEDENCE
+
+
+def passes_sender_check(headers):
+    """Gmail's own (topmost) Authentication-Results must show DMARC pass, or SPF+DKIM pass."""
+    results = headers.get_all("Authentication-Results") or []
+    if not results:
+        return False
+    top = str(results[0]).lower()
+    if "mx.google.com" not in top:
+        return False
+    return "dmarc=pass" in top or ("spf=pass" in top and "dkim=pass" in top)
+
+
 def reply_subject(subject):
     """'Re: <original subject>'. Kept unchanged so Gmail keeps the reply in the thread."""
     subject = subject or "(no subject)"
     return subject if subject.lower().startswith("re:") else f"Re: {subject}"
-
-
-def preview(text, limit=PREVIEW_CHARS):
-    text = text.replace("\r", "")
-    return text if len(text) <= limit else text[:limit] + "..."
 
 
 def check_reply_args(args):
@@ -173,7 +263,6 @@ def check_reply_args(args):
 
 # ---------------------------------------------------------------------------
 # save_reply back ends. Each returns (message for Claude, draft text to print).
-# Neither can send anything.
 # ---------------------------------------------------------------------------
 
 def file_saver(email):
@@ -197,24 +286,61 @@ def file_saver(email):
     return save
 
 
-class GmailDrafts:
-    """--inbox mode: an IMAP session that reads the inbox and creates drafts only."""
+def pending_saver(email, pending):
+    """--watch mode: hold the reply; the code decides afterwards to send it or draft it."""
+    def save(args):
+        reply_text, needs_review = check_reply_args(args)
+        pending.update(text=reply_text, needs_human_review=needs_review)
+        outcome = "keep it as a Gmail draft for HR" if needs_review else "send it"
+        draft = (
+            f"To: the allowed sender who is treated as {email['sender']}\n"
+            f"Subject: {reply_subject(email['subject'])}\n"
+            f"Needs human review: {'YES' if needs_review else 'no'}\n"
+            f"In reply to: {email['label']}\n"
+            f"Next: the program will {outcome}\n"
+            f"\n{reply_text}\n"
+        )
+        return "Reply saved.", draft
+    return save
 
-    def __init__(self):
+
+class Gmail:
+    """IMAP for reading the inbox and creating drafts; SMTP only for --watch sends."""
+
+    def __init__(self, keep_password=False):
         address, password = read_login(LOGIN_FILE)
-        self.address = address  # used only in draft headers; never printed
+        self.address = address  # used only in message headers; never printed
+        self._password = password if keep_password else None
+        self.imap = None
+        self._connect(password)
+        password = None
+
+    # -- connection --------------------------------------------------------
+
+    def _connect(self, password):
         try:
             self.imap = imaplib.IMAP4_SSL(IMAP_HOST, 993)
         except OSError as exc:
-            sys.exit(f"Couldn't connect to {IMAP_HOST}: {exc}")
+            sys.exit(f"Couldn't connect to {IMAP_HOST}: {exc.strerror or type(exc).__name__}")
         try:
-            self.imap.login(address, password)
+            self.imap.login(self.address, password)
         except imaplib.IMAP4.error:
             sys.exit(f"Gmail sign-in failed. Check {LOGIN_FILE.name} and that IMAP is on.")
-        finally:
-            password = None
         self.drafts = self._find_drafts_mailbox()
         self._select_inbox()
+
+    def reconnect(self):
+        if self._password is None:
+            raise RuntimeError("can't reconnect without the login")
+        self.close()
+        self._connect(self._password)
+
+    def secrets(self):
+        """Values the Redactor must hide."""
+        values = [self.address]
+        if self._password:
+            values += [self._password, self._password.replace(" ", "")]
+        return values
 
     def _find_drafts_mailbox(self):
         """The mailbox flagged \\Drafts (its name depends on the Gmail language)."""
@@ -232,11 +358,22 @@ class GmailDrafts:
         if status != "OK":
             sys.exit("Couldn't open INBOX.")
 
+    # -- reading -----------------------------------------------------------
+
     def unread_uids(self):
+        self.imap.noop()  # pick up mail that arrived since the last check
         status, data = self.imap.uid("search", None, "UNSEEN")
         if status != "OK":
-            sys.exit("Couldn't search the inbox for unread messages.")
+            raise RuntimeError("couldn't search the inbox for unread messages")
         return data[0].split() if data and data[0] else []
+
+    def peek_headers(self, uid):
+        """Headers only, without marking the message read."""
+        status, data = self.imap.uid("fetch", uid, "(BODY.PEEK[HEADER])")
+        if status != "OK":
+            raise RuntimeError(f"couldn't read the headers of message UID {uid.decode()}")
+        raw = next((part[1] for part in data or [] if isinstance(part, tuple)), b"")
+        return BytesParser(policy=policy.default).parsebytes(raw, headersonly=True)
 
     def fetch_and_mark_read(self, uid):
         """Fetch one message without marking it, then mark it read before any work."""
@@ -256,57 +393,47 @@ class GmailDrafts:
             raise RuntimeError(f"couldn't mark message UID {uid.decode()} as read")
         return raw, thread
 
-    def saver(self, email, thread, original_uid):
-        """save_reply for one inbox email: create a Gmail draft in the same thread.
-        If it needs review, label both the draft and the original email."""
-        def save(args):
-            reply_text, needs_review = check_reply_args(args)
-            now = datetime.now().astimezone()
-            subject = reply_subject(email["subject"])
-            msg = EmailMessage()
-            msg["From"] = self.address
-            msg["To"] = email["sender"]  # the From address only, never Reply-To
-            msg["Subject"] = subject
-            msg["Date"] = format_datetime(now)
-            msg["Message-ID"] = make_msgid(domain=self.address.split("@")[-1])
-            if email["message_id"]:
-                msg["In-Reply-To"] = email["message_id"]
-                msg["References"] = f"{email['references']} {email['message_id']}".strip()
-            msg.set_content(reply_text)
-            data = msg.as_bytes(policy=policy.SMTP)  # CRLF line endings
+    # -- writing -----------------------------------------------------------
 
-            status, resp = self.imap.append(self.drafts, "(\\Draft)",
-                                            imaplib.Time2Internaldate(now), data)
-            if status != "OK":
-                raise RuntimeError(f"Gmail didn't accept the draft: {resp}")
-            m = re.search(rb"APPENDUID \d+ (\d+)", b" ".join(
-                r if isinstance(r, bytes) else str(r).encode() for r in resp or []))
-            draft_uid = m.group(1) if m else None
+    def make_reply(self, email, reply_text, to_address):
+        msg = EmailMessage()
+        msg["From"] = self.address
+        msg["To"] = to_address
+        msg["Subject"] = reply_subject(email["subject"])
+        msg["Date"] = format_datetime(datetime.now().astimezone())
+        msg["Message-ID"] = make_msgid(domain=self.address.split("@")[-1])
+        if email["message_id"]:
+            msg["In-Reply-To"] = email["message_id"]
+            msg["References"] = f"{email['references']} {email['message_id']}".strip()
+        msg.set_content(reply_text)
+        return msg
 
-            threaded, label_note = self._check_and_label(draft_uid, thread, original_uid,
-                                                         needs_review)
-            note = {True: "yes", False: "NO (Gmail started a new thread)",
-                    None: "couldn't check"}[threaded]
-            draft = (
-                f"To: {email['sender']}\n"
-                f"Subject: {subject}\n"
-                f"Needs human review: {'YES' if needs_review else 'no'}\n"
-                f"Gmail label: {label_note}\n"
-                f"In reply to: {email['label']}\n"
-                f"Same thread as the original: {note}\n"
-                f"Status: Gmail draft - not sent\n"
-                f"\n{reply_text}\n"
-            )
-            return "Draft created in Gmail (not sent).", draft
-        return save
+    def save_draft(self, msg, original_thread, original_uid, needs_review):
+        """Put msg in Drafts. Returns (same thread: True/False/None, label note)."""
+        data = msg.as_bytes(policy=policy.SMTP)  # CRLF line endings
+        status, resp = self.imap.append(self.drafts, "(\\Draft)",
+                                        imaplib.Time2Internaldate(datetime.now().astimezone()),
+                                        data)
+        if status != "OK":
+            raise RuntimeError("Gmail didn't accept the draft")
+        m = re.search(rb"APPENDUID \d+ (\d+)", b" ".join(
+            r if isinstance(r, bytes) else str(r).encode() for r in resp or []))
+        draft_uid = m.group(1) if m else None
+        return self._check_and_label(draft_uid, original_thread, original_uid, needs_review)
+
+    def send(self, msg):
+        """--watch only: send msg with Gmail SMTP. Raises on failure."""
+        if self._password is None:
+            raise RuntimeError("sending isn't enabled in this mode")
+        with smtplib.SMTP_SSL(SMTP_HOST, 465, timeout=60) as smtp:
+            smtp.login(self.address, self._password)
+            smtp.send_message(msg)
 
     def _add_label(self, uid):
         status, _ = self.imap.uid("store", uid, "+X-GM-LABELS", f'("{REVIEW_LABEL}")')
         return status == "OK"
 
     def _check_and_label(self, draft_uid, original_thread, original_uid, needs_review):
-        """Check the draft's thread and, if needed, label the draft and the original.
-        Returns (same_thread: True/False/None, label note)."""
         threaded, draft_labeled = None, False
         if draft_uid:
             try:
@@ -329,11 +456,34 @@ class GmailDrafts:
         missing = "" if len(done) == 2 else " (couldn't label the other one)"
         return threaded, f"'{REVIEW_LABEL}' added to the {' and '.join(done)}{missing}"
 
+    def draft_saver(self, email, thread, original_uid):
+        """--inbox mode: save_reply creates a Gmail draft in the same thread."""
+        def save(args):
+            reply_text, needs_review = check_reply_args(args)
+            msg = self.make_reply(email, reply_text, email["sender"])  # From address, never Reply-To
+            threaded, label_note = self.save_draft(msg, thread, original_uid, needs_review)
+            draft = (
+                f"To: {email['sender']}\n"
+                f"Subject: {msg['Subject']}\n"
+                f"Needs human review: {'YES' if needs_review else 'no'}\n"
+                f"Gmail label: {label_note}\n"
+                f"In reply to: {email['label']}\n"
+                f"Same thread as the original: {thread_note(threaded)}\n"
+                f"Status: Gmail draft - not sent\n"
+                f"\n{reply_text}\n"
+            )
+            return "Draft created in Gmail (not sent).", draft
+        return save
+
     def close(self):
         try:
             self.imap.logout()
         except Exception:
             pass
+
+
+def thread_note(threaded):
+    return {True: "yes", False: "NO (Gmail started a new thread)", None: "couldn't check"}[threaded]
 
 
 # ---------------------------------------------------------------------------
@@ -352,7 +502,7 @@ async def call_mcp_tool(session, name, args):
     return text or "(empty result)", bool(getattr(result, "is_error", False))
 
 
-async def run_agent(client, email, save):
+async def run_agent(client, email, save, save_tool=SAVE_REPLY_TOOL):
     """Handle one email. Returns (tool_calls, tokens_in, tokens_out)."""
     sender = email["sender"]
     system_prompt = SYSTEM_PROMPT_FILE.read_text(encoding="utf-8").strip()  # read every run
@@ -382,7 +532,7 @@ async def run_agent(client, email, save):
                 mcp_names = {t.name for t in mcp_tools}
                 tools = [{"name": t.name, "description": t.description or "",
                           "input_schema": t.input_schema} for t in mcp_tools]
-                tools.append(SAVE_REPLY_TOOL)
+                tools.append(save_tool)
                 print(f"Tools:  {', '.join(t['name'] for t in tools)}\n")
 
                 messages = [{
@@ -439,7 +589,7 @@ async def run_agent(client, email, save):
                         try:
                             if block.name == "save_reply":
                                 if draft is not None:
-                                    raise ValueError("A draft was already saved; save_reply runs only once.")
+                                    raise ValueError("A reply was already saved; save_reply runs only once.")
                                 text, draft = save(block.input)
                                 is_error = False
                             elif block.name in mcp_names:
@@ -460,7 +610,7 @@ async def run_agent(client, email, save):
     print(f"Stopped: {stop}")
     print(f"Tool calls: {tool_calls}")
     print(RULE)
-    print(draft if draft else "No draft was saved.")
+    print(draft if draft else "No reply was saved.")
     print(RULE)
     print(f"Tokens for this email: {tokens_in:,} input, {tokens_out:,} output")
     return tool_calls, tokens_in, tokens_out
@@ -478,7 +628,7 @@ def email_mode(client, path):
 
 def inbox_mode(client):
     print(f"Connecting to {IMAP_HOST} ...")
-    gmail = GmailDrafts()
+    gmail = Gmail()
     try:
         print("Signed in.")
         uids = gmail.unread_uids()
@@ -494,7 +644,7 @@ def inbox_mode(client):
             print("(Marked as read in Gmail before starting.)")
             email = parse_email(raw, f"inbox message UID {uid.decode()}")
             try:
-                _, t_in, t_out = asyncio.run(run_agent(client, email, gmail.saver(email, thread, uid)))
+                _, t_in, t_out = asyncio.run(run_agent(client, email, gmail.draft_saver(email, thread, uid)))
             except anthropic.AuthenticationError:
                 sys.exit("The API key was rejected (authentication error).")
             except (anthropic.APIError, OSError, RuntimeError) as exc:
@@ -512,12 +662,137 @@ def inbox_mode(client):
         gmail.close()
 
 
+def watch_mode(client):
+    allow = read_allowlist(ALLOWLIST_FILE)
+    gmail = Gmail(keep_password=True)
+    # From here on, every printed or saved line has the real addresses and password hidden.
+    hidden = list(allow) + gmail.secrets()
+    real_out, real_err = sys.stdout, sys.stderr
+    sys.stdout, sys.stderr = Redactor(real_out, hidden), Redactor(real_err, hidden)
+
+    sent = drafted = 0
+    total_in = total_out = 0
+    passed_over = set()  # UIDs left unread on purpose; reported once
+    try:
+        print("Signed in to Gmail.")
+        print(f"Allowlist: {len(allow)} sender(s), treated as: "
+              f"{', '.join(sorted(set(allow.values())))}")
+        print(f"Watching the inbox every {POLL_SECONDS} seconds. Stops after {MAX_SENT} "
+              "replies are sent, or press Ctrl+C.\n")
+        while sent < MAX_SENT:
+            try:
+                uids = gmail.unread_uids()
+            except (imaplib.IMAP4.abort, imaplib.IMAP4.error, OSError, RuntimeError):
+                print(f"[{datetime.now():%H:%M:%S}] Lost the Gmail connection; reconnecting.")
+                gmail.reconnect()
+                continue
+
+            for uid in uids:
+                if uid in passed_over:
+                    continue
+                stamp = f"[{datetime.now():%H:%M:%S}] UID {uid.decode()}"
+                try:
+                    headers = gmail.peek_headers(uid)
+                except (imaplib.IMAP4.abort, OSError):
+                    print(f"{stamp}: lost the Gmail connection; reconnecting.")
+                    gmail.reconnect()
+                    break
+                except (imaplib.IMAP4.error, RuntimeError):
+                    print(f"{stamp}: left unread - couldn't read its headers.")
+                    passed_over.add(uid)
+                    continue
+                real_sender = parseaddr(str(headers.get("From", "")))[1].strip().lower()
+                if real_sender not in allow:
+                    print(f"{stamp}: left unread - sender isn't on the allowlist.")
+                    passed_over.add(uid)
+                    continue
+                if is_automatic(headers):
+                    print(f"{stamp}: left unread - automatic mail.")
+                    passed_over.add(uid)
+                    continue
+                if not passes_sender_check(headers):
+                    print(f"{stamp}: left unread - failed Gmail's sender check (possible forgery).")
+                    passed_over.add(uid)
+                    continue
+
+                employee = allow[real_sender]
+                print(f"{'#' * 70}\n{stamp}: allowed sender, treated as {employee}\n{'#' * 70}")
+                try:
+                    raw, thread = gmail.fetch_and_mark_read(uid)
+                except (imaplib.IMAP4.abort, OSError):
+                    print("Lost the Gmail connection; reconnecting.")
+                    gmail.reconnect()
+                    break
+                except (imaplib.IMAP4.error, RuntimeError):
+                    print("Skipped: couldn't fetch it.")
+                    passed_over.add(uid)
+                    continue
+                print("(Marked as read in Gmail before starting.)")
+                email = parse_email(raw, f"inbox message UID {uid.decode()}")
+                email["sender"] = employee  # the agent only ever sees the employee identity
+
+                pending = {}
+                try:
+                    _, t_in, t_out = asyncio.run(run_agent(
+                        client, email, pending_saver(email, pending), WATCH_SAVE_REPLY_TOOL))
+                except anthropic.AuthenticationError:
+                    sys.exit("The API key was rejected (authentication error).")
+                except (anthropic.APIError, OSError, RuntimeError) as exc:
+                    print(f"Stopped: this email failed ({type(exc).__name__}). It's marked read; "
+                          "mark it unread in Gmail to try again.\n")
+                    continue
+                total_in += t_in
+                total_out += t_out
+
+                if not pending:
+                    print("Result: no reply was saved, so nothing was sent or drafted.\n")
+                    continue
+                msg = gmail.make_reply(email, pending["text"], real_sender)
+                if pending["needs_human_review"]:
+                    threaded, label_note = gmail.save_draft(msg, thread, uid, True)
+                    drafted += 1
+                    print(f"Result: kept as a Gmail draft (needs review). Label: {label_note}. "
+                          f"Same thread: {thread_note(threaded)}.\n")
+                    continue
+                try:
+                    gmail.send(msg)
+                except (smtplib.SMTPException, OSError) as exc:
+                    code = getattr(exc, "smtp_code", "")
+                    threaded, _ = gmail.save_draft(msg, thread, uid, False)
+                    drafted += 1
+                    print(f"Result: SENDING FAILED ({type(exc).__name__} {code}). Saved as a "
+                          f"Gmail draft instead. Same thread: {thread_note(threaded)}.\n")
+                    continue
+                sent += 1
+                print(f"Result: SENT with Gmail SMTP ({sent} of {MAX_SENT}).\n")
+                if sent >= MAX_SENT:
+                    break
+
+            if sent >= MAX_SENT:
+                print(f"Reached the limit of {MAX_SENT} sent replies; stopping.")
+                break
+            for _ in range(POLL_SECONDS):  # short sleeps so Ctrl+C stops it quickly
+                time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nStopped by Ctrl+C.")
+    finally:
+        gmail.close()
+        print(RULE)
+        print(f"Replies sent: {sent}. Kept as drafts: {drafted}.")
+        print(f"Total tokens: {total_in:,} input, {total_out:,} output")
+        sys.stdout.flush()
+        sys.stdout, sys.stderr = real_out, real_err
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--email", metavar="PATH", help="path of one employee email file (.eml)")
     source.add_argument("--inbox", action="store_true",
-                        help="handle each unread email in the Gmail sandbox inbox")
+                        help="handle each unread email in the Gmail sandbox inbox (drafts only)")
+    source.add_argument("--watch", action="store_true",
+                        help=f"check every {POLL_SECONDS}s; handle allowlisted senders; send "
+                             f"unflagged replies (at most {MAX_SENT})")
     parser.add_argument("--save", metavar="FILE",
                         help="also write everything printed to FILE (UTF-8)")
     args = parser.parse_args()
@@ -537,7 +812,9 @@ def main():
     code = 0
     try:
         client = anthropic.Anthropic(api_key=load_api_key())
-        if args.inbox:
+        if args.watch:
+            watch_mode(client)
+        elif args.inbox:
             inbox_mode(client)
         else:
             email_mode(client, args.email)
@@ -547,6 +824,9 @@ def main():
             code = 1
         else:
             code = exc.code or 0
+    except KeyboardInterrupt:
+        print("\nStopped by Ctrl+C.", file=sys.stderr)
+        code = 130
     except anthropic.AuthenticationError:
         print("The API key was rejected (authentication error).", file=sys.stderr)
         code = 1
