@@ -1,4 +1,0 @@
-mcp>=2.3
-chromadb>=1.5
-beautifulsoup4>=4.12
-anthropic>=2.6
