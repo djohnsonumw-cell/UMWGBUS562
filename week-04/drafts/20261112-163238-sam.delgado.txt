@@ -1,0 +1,16 @@
+To: sam.delgado@hartwellfoods.example
+Subject: [NEEDS HR REVIEW] Re: Not sure who to talk to
+Needs human review: YES
+In reply to: week-04\hartwell-hr\sample-emails\06-sam-concern.eml
+Status: DRAFT - not sent
+
+Hi Sam,
+
+Thank you for reaching out, and I'm sorry to hear you're dealing with this. Comments about your accent from your manager are not okay, and this is something we want to address properly.
+
+I'm flagging your message for a member of our HR team to follow up with you directly and confidentially as soon as possible. They'll be able to walk you through next steps and make sure you're supported throughout the process.
+
+Thank you for having the courage to bring this forward.
+
+Best,
+HR Assistant
