@@ -1,0 +1,36 @@
+Sender:  logan.brooks@ridgelinehotels.example
+Subject: Days off
+Email:   week-04\ridgeline-hotels\sample-emails\07-logan-seasonal.eml
+Org:     ridgeline-hotels
+Starting hr_mcp_server.py --org ridgeline-hotels --as-employee logan.brooks@ridgelinehotels.example ...
+Tools:  search_policy, get_leave_balance, save_reply
+
+Step 1: get_leave_balance
+  inputs: {}
+  result (error): Error executing tool get_leave_balance: No employee record matches 'logan.brooks@ridgelinehotels.example'. Do not state, estimate, or guess any leave balance for this person. Say that their balance couldn't be found and that someone in HR will check their record.
+
+Step 2: save_reply
+  inputs: {"reply_text": "Hi Logan,\n\nThanks for reaching out! I wasn't able to find your PTO balance in our system when I looked it up just now. I don't want to guess, so I've flagged this for someone on the People and Culture team to check your employee record directly and follow up with the correct number of days remaining.\n\nBest regards,\nPeople and Culture, Ridgeline Hotels", "needs_human_review": true}
+  result: Draft saved (not sent) to week-04\drafts\20261112-205522-logan.brooks.txt.
+
+Claude: I've saved a draft reply for Logan. Since the system couldn't locate his PTO balance in our records, I flagged it for the People and Culture team to look up his record manually and follow up with the correct number.
+
+======================================================================
+Stopped: Claude finished and asked for no more tools.
+Tool calls: 2
+======================================================================
+To: logan.brooks@ridgelinehotels.example
+Subject: Re: Days off
+In reply to: week-04\ridgeline-hotels\sample-emails\07-logan-seasonal.eml
+Status: saved as a file - not sent
+DRAFT
+Hi Logan,
+
+Thanks for reaching out! I wasn't able to find your PTO balance in our system when I looked it up just now. I don't want to guess, so I've flagged this for someone on the People and Culture team to check your employee record directly and follow up with the correct number of days remaining.
+
+Best regards,
+People and Culture, Ridgeline Hotels
+Needs human review: true
+
+======================================================================
+Tokens for this email: 6,317 input, 314 output

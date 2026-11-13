@@ -1,0 +1,12 @@
+To: logan.brooks@ridgelinehotels.example
+Subject: Re: Days off
+In reply to: week-04\ridgeline-hotels\sample-emails\07-logan-seasonal.eml
+Status: saved as a file - not sent
+DRAFT
+Hi Logan,
+
+Thanks for reaching out! I wasn't able to find your PTO balance in our system when I looked it up just now. I don't want to guess, so I've flagged this for someone on the People and Culture team to check your employee record directly and follow up with the correct number of days remaining.
+
+Best regards,
+People and Culture, Ridgeline Hotels
+Needs human review: true

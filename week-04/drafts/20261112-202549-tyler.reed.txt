@@ -1,0 +1,18 @@
+To: tyler.reed@ridgelinehotels.example
+Subject: Re: Trip planning
+In reply to: week-04\ridgeline-hotels\sample-emails\04-tyler-coworker.eml
+Status: saved as a file - not sent
+DRAFT
+Hi Tyler,
+
+Thanks for reaching out, and that sounds like a fun trip!
+
+I'm not able to share Jenna's PTO balance with you, even with her okay, since our system only lets me look up the balance of the person I'm replying to. Jenna can check her own PTO days remaining by reaching out to HR directly or her supervisor, and then you two can compare notes to find dates that work for both of you.
+
+For reference, your own PTO balance is 11 days remaining (and 6 sick days remaining), per our records (employees.csv).
+
+Hope you two land on some great dates!
+
+Best,
+HR Team
+Needs human review: false
