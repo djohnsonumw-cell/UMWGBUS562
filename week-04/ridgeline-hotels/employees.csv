@@ -1,0 +1,13 @@
+Email Address,Employee Name,Hotel,Role,Supervisor,PTO Days Remaining,Sick Days Remaining
+jenna.morales@ridgelinehotels.example,Jenna Morales,Ridgeline Boulder,Front Desk Agent,Rachel Evans,8,5
+kevin.walsh@ridgelinehotels.example,Kevin Walsh,Ridgeline Durango,Maintenance Technician,Scott Bailey,10,6
+brittany.cole@ridgelinehotels.example,Brittany Cole,Ridgeline Taos,Server,Amanda Ross,4,3
+tyler.reed@ridgelinehotels.example,Tyler Reed,Ridgeline Boulder,Front Desk Agent,Rachel Evans,11,6
+nicole.hayes@ridgelinehotels.example,Nicole Hayes,Ridgeline Durango,Housekeeper,Greg Patterson,6,4
+danielle.price@ridgelinehotels.example,Danielle Price,Ridgeline Boulder,Housekeeper,Greg Patterson,9,2
+rachel.evans@ridgelinehotels.example,Rachel Evans,Ridgeline Boulder,Front Office Manager,Linda Foster,15,6
+greg.patterson@ridgelinehotels.example,Greg Patterson,Ridgeline Boulder,Executive Housekeeper,Linda Foster,13,5
+scott.bailey@ridgelinehotels.example,Scott Bailey,Ridgeline Durango,Chief Engineer,Linda Foster,16,6
+amanda.ross@ridgelinehotels.example,Amanda Ross,Ridgeline Taos,Restaurant Manager,Linda Foster,12,4
+linda.foster@ridgelinehotels.example,Linda Foster,Ridgeline Boulder,General Manager,,18,6
+derek.hughes@ridgelinehotels.example,Derek Hughes,Corporate Office,Director of People and Culture,Linda Foster,14,6

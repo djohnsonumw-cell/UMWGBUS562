@@ -1,4 +1,10 @@
-"""Hartwell Foods HR agent: drafts replies to employee emails using Claude tool use.
+"""HR agent: drafts replies to employee emails using Claude tool use.
+
+It works for any organization folder laid out like week-04/hartwell-hr (hr-docs/,
+employees.csv, sample-emails/, system_prompt.txt). Choose one with --org (a path,
+or a folder name inside week-04); without --org it uses week-04/hartwell-hr. The
+system prompt is read from that folder, and the MCP server is started with the
+same --org.
 
 Three ways to run it:
 
@@ -27,10 +33,12 @@ Three ways to run it:
                    * Your real addresses and the password are replaced with <hidden>
                      in everything printed or saved with --save.
 
-Add --save FILE to also write everything printed to FILE (UTF-8).
+Add --save FILE to also write everything printed to FILE (UTF-8); it works with
+all three modes.
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-04\\agent.py --email week-04\\hartwell-hr\\sample-emails\\03-megan-time-off.eml
+    .venv\\Scripts\\python.exe week-04\\agent.py --org ridgeline-hotels --email week-04\\ridgeline-hotels\\sample-emails\\01-jenna-pto.eml --save week-04\\runs\\ridgeline-01.txt
     .venv\\Scripts\\python.exe week-04\\agent.py --inbox --save week-04\\runs\\inbox-run.txt
     .venv\\Scripts\\python.exe week-04\\agent.py --watch --save week-04\\runs\\watch-run.txt
 
@@ -65,7 +73,8 @@ from load_inbox import IMAP_HOST, LOGIN_FILE, read_login
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 SERVER_SCRIPT = HERE / "hr_mcp_server.py"
-SYSTEM_PROMPT_FILE = HERE / "hartwell-hr" / "system_prompt.txt"
+DEFAULT_ORG = HERE / "hartwell-hr"
+ORG_DIR = DEFAULT_ORG  # set from --org in main()
 DRAFTS_DIR = HERE / "drafts"
 SERVER_LOG = HERE / "mcp_server.log"  # *.log is git-ignored
 KEY_FILES = [REPO.parent / "API Key.txt", REPO.parent / "API-Key.txt"]
@@ -172,6 +181,23 @@ def preview(text, limit=PREVIEW_CHARS):
     return text if len(text) <= limit else text[:limit] + "..."
 
 
+def format_draft(details, reply_text, needs_review):
+    """Detail lines, then a line with only DRAFT, the reply, and the review line."""
+    lines = details + ["DRAFT", reply_text,
+                       f"Needs human review: {'true' if needs_review else 'false'}"]
+    return "\n".join(lines) + "\n"
+
+
+def resolve_org(value):
+    """--org value -> organization folder: a path, or a folder name inside week-04."""
+    if not value:
+        return DEFAULT_ORG
+    for candidate in (Path(value), HERE / value):
+        if candidate.is_dir():
+            return candidate.resolve()
+    sys.exit(f"Organization folder not found: {value}")
+
+
 # ---------------------------------------------------------------------------
 # Setup helpers
 # ---------------------------------------------------------------------------
@@ -273,14 +299,12 @@ def file_saver(email):
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         local = re.sub(r"[^a-z0-9.-]", "_", email["sender"].split("@")[0])
         path = DRAFTS_DIR / f"{stamp}-{local}.txt"
-        draft = (
-            f"To: {email['sender']}\n"
-            f"Subject: {reply_subject(email['subject'])}\n"
-            f"Needs human review: {'YES' if needs_review else 'no'}\n"
-            f"In reply to: {email['label']}\n"
-            f"Status: DRAFT - not sent\n"
-            f"\n{reply_text}\n"
-        )
+        draft = format_draft([
+            f"To: {email['sender']}",
+            f"Subject: {reply_subject(email['subject'])}",
+            f"In reply to: {email['label']}",
+            "Status: saved as a file - not sent",
+        ], reply_text, needs_review)
         path.write_text(draft, encoding="utf-8")
         return f"Draft saved (not sent) to {path.relative_to(REPO)}.", draft
     return save
@@ -292,14 +316,12 @@ def pending_saver(email, pending):
         reply_text, needs_review = check_reply_args(args)
         pending.update(text=reply_text, needs_human_review=needs_review)
         outcome = "keep it as a Gmail draft for HR" if needs_review else "send it"
-        draft = (
-            f"To: the allowed sender who is treated as {email['sender']}\n"
-            f"Subject: {reply_subject(email['subject'])}\n"
-            f"Needs human review: {'YES' if needs_review else 'no'}\n"
-            f"In reply to: {email['label']}\n"
-            f"Next: the program will {outcome}\n"
-            f"\n{reply_text}\n"
-        )
+        draft = format_draft([
+            f"To: the allowed sender who is treated as {email['sender']}",
+            f"Subject: {reply_subject(email['subject'])}",
+            f"In reply to: {email['label']}",
+            f"Next: the program will {outcome}",
+        ], reply_text, needs_review)
         return "Reply saved.", draft
     return save
 
@@ -462,16 +484,14 @@ class Gmail:
             reply_text, needs_review = check_reply_args(args)
             msg = self.make_reply(email, reply_text, email["sender"])  # From address, never Reply-To
             threaded, label_note = self.save_draft(msg, thread, original_uid, needs_review)
-            draft = (
-                f"To: {email['sender']}\n"
-                f"Subject: {msg['Subject']}\n"
-                f"Needs human review: {'YES' if needs_review else 'no'}\n"
-                f"Gmail label: {label_note}\n"
-                f"In reply to: {email['label']}\n"
-                f"Same thread as the original: {thread_note(threaded)}\n"
-                f"Status: Gmail draft - not sent\n"
-                f"\n{reply_text}\n"
-            )
+            draft = format_draft([
+                f"To: {email['sender']}",
+                f"Subject: {msg['Subject']}",
+                f"Gmail label: {label_note}",
+                f"In reply to: {email['label']}",
+                f"Same thread as the original: {thread_note(threaded)}",
+                "Status: Gmail draft - not sent",
+            ], reply_text, needs_review)
             return "Draft created in Gmail (not sent).", draft
         return save
 
@@ -505,19 +525,20 @@ async def call_mcp_tool(session, name, args):
 async def run_agent(client, email, save, save_tool=SAVE_REPLY_TOOL):
     """Handle one email. Returns (tool_calls, tokens_in, tokens_out)."""
     sender = email["sender"]
-    system_prompt = SYSTEM_PROMPT_FILE.read_text(encoding="utf-8").strip()  # read every run
-
-    print(f"Email:  {email['label']}")
-    print(f"Sender: {sender}")
+    print(f"Sender:  {sender}")
     print(f"Subject: {email['subject']}")
+    print(f"Email:   {email['label']}")
+    print(f"Org:     {ORG_DIR.name}")
     if "@" not in sender:
         print("Stopped: couldn't find a sender address in the From: line.")
         return 0, 0, 0
-    print(f"Starting {SERVER_SCRIPT.name} --as-employee {sender} ...")
+    # Read the organization's system prompt every run.
+    system_prompt = (ORG_DIR / "system_prompt.txt").read_text(encoding="utf-8").strip()
+    print(f"Starting {SERVER_SCRIPT.name} --org {ORG_DIR.name} --as-employee {sender} ...")
 
     server = StdioServerParameters(
         command=sys.executable,
-        args=[str(SERVER_SCRIPT), "--as-employee", sender],
+        args=[str(SERVER_SCRIPT), "--org", str(ORG_DIR), "--as-employee", sender],
         cwd=str(REPO),
     )
     tool_calls = tokens_in = tokens_out = 0
@@ -793,11 +814,20 @@ def main():
     source.add_argument("--watch", action="store_true",
                         help=f"check every {POLL_SECONDS}s; handle allowlisted senders; send "
                              f"unflagged replies (at most {MAX_SENT})")
+    parser.add_argument("--org", metavar="FOLDER",
+                        help="organization folder (a path, or a folder name inside week-04); "
+                             "default: hartwell-hr")
     parser.add_argument("--save", metavar="FILE",
-                        help="also write everything printed to FILE (UTF-8)")
+                        help="also write everything printed to FILE (UTF-8); works with any mode")
     args = parser.parse_args()
     if args.email and not Path(args.email).is_file():
         sys.exit(f"Email file not found: {args.email}")
+    global ORG_DIR
+    ORG_DIR = resolve_org(args.org)
+    missing = [n for n in ("hr-docs", "employees.csv", "system_prompt.txt")
+               if not (ORG_DIR / n).exists()]
+    if missing:
+        sys.exit(f"{ORG_DIR} is missing: {', '.join(missing)}")
 
     sys.stdout.reconfigure(encoding="utf-8")
     log = None
