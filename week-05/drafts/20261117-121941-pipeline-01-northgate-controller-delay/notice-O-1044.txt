@@ -1,0 +1,29 @@
+To: Main Street Bikes <owner@mainstreetbikes.example>
+Subject: Update on your Brookfield order O-1044
+From: Customer Service, Brookfield Bicycle Company
+Review: approved
+Status: draft only - not sent
+
+DRAFT
+Dear Main Street Bikes,
+
+We're writing about your order O-1044 for 30 Cargo E bicycles. Because of a delay in a part from one of our suppliers, we now expect your order to ship 8 days later than originally planned.
+
+We're sorry for this delay and for any inconvenience it may cause.
+
+If you have any questions about your order, please reply to this email and a member of our team will help.
+
+Customer Service, Brookfield Bicycle Company
+
+REVIEW NOTES
+Round 1: APPROVE
+APPROVE
+
+All six rules pass.
+
+1. **Numbers:** The order number (O-1044), quantity (30), model (Cargo E) and the 8-day delay all match the facts.
+2. **Promises:** "8 days later than originally planned" is in the facts. The draft gives no ship date, credit or discount.
+3. **Supplier names customer:** Doesn't apply, since this goes to a customer.
+4. **Customer names supplier:** "One of our suppliers" names no supplier. No other customer or cost is mentioned.
+5. **Commitments:** Nothing is accepted, agreed to or cancelled.
+6. **Tone:** Plain and apologetic, as it should be for a customer.

@@ -1,0 +1,18 @@
+Coordinator: orchestrator
+Email: 01-northgate-controller-delay.eml
+Subject: PO-7781 - MC-500 controllers - revised shipment schedule
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Northgate (PO-7781, 400 MC-500 controllers) will now ship in two parts: 120 on day 5 as planned and 280 on day 26. This puts three orders at risk. O-1043, City of Ashford Bike Share: 100 Commuter E, 10 controllers short, 12 days late, and this order carries a late penalty. O-1044, Main Street Bikes: 30 Cargo E, 8 days late. O-1045, Lakeview Rentals: 50 Commuter E, 5 days late. A draft reply to Karen Walsh is saved for review at week-05\drafts\20261117-121941-orchestrator-01-northgate-controller-delay\supplier-reply.txt. Nothing has been sent. Decisions needed: (1) Whether to take Karen's offer to talk this week, mainly to get at least 10 more controllers before day 14 so O-1043 avoids its penalty. (2) Karen asked which of our customers are most affected. Before sending the draft, check that it doesn't name our customers or share order details. Only give her the quantities and dates we need. (3) Whether and when to tell the three customers. I held off on drafting customer notices because the delivery dates may change after the talk with Northgate. Once the plan is settled, I can draft them.
+
+DRAFTS
+- supplier-reply.txt [supplier]: approved after one revision
+
+USAGE
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         6,323            947
+supply analyst             3         8,593          1,328
+supplier-writer            2         2,921          1,183
+reviewer                   2         2,666          1,379
+Total                     10        20,503          4,837

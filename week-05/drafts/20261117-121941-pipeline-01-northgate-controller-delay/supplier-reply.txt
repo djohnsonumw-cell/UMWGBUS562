@@ -1,0 +1,46 @@
+To: Karen Walsh <k.walsh@northgatedrive.example>
+Subject: Re: PO-7781 - MC-500 controllers - revised shipment schedule
+From: Purchasing, Brookfield Bicycle Company
+In reply to: 01-northgate-controller-delay.eml
+Review: approved
+Status: draft only - not sent
+
+DRAFT
+Hello Karen,
+
+Thank you for letting us know about the revised schedule for PO-7781.
+
+To confirm our understanding:
+
+- **On the original scheduled date (day 5 in our planning):** 120 of the 400 MC-500 motor controllers will ship.
+- **Three weeks after the original date (day 26 in our planning):** the remaining 280 units will ship.
+
+Please let us know if any part of this is incorrect.
+
+As it stands, this change leaves us 90 units short across 3 orders. Those orders will be delayed by between 5 and 12 days.
+
+We don't share customer details with suppliers, so we can't say which customers are affected. The figures above show the full impact on our side.
+
+The most useful thing would be to receive part of the remaining 280 units sooner. Could you tell us:
+
+- whether any of those units could ship before the three-week date
+- if so, how many and when
+- any other options you can offer
+
+The earlier any of those units can arrive, the more of the shortfall we can recover.
+
+Thank you for your help. We look forward to your reply.
+
+Purchasing, Brookfield Bicycle Company
+
+REVIEW NOTES
+Round 1: APPROVE
+APPROVE
+
+- **Rule 1:** Every number in the draft appears in the brief: 120, 400, 280, day 5, day 26, 90 units, 3 orders and 5–12 days. PO-7781 appears in the facts.
+- **Rule 2:** The draft promises nothing. It confirms the supplier's own schedule and asks whether earlier shipment is possible.
+- **Rule 3:** No customer or customer order number is named. The shortfall is given only as a total across 3 orders.
+- **Rule 5:** The draft asks what options exist but accepts none, agrees to no cost and cancels nothing.
+- **Rule 6:** The tone is firm and cooperative. It is clear about the impact and asks direct questions about earlier delivery.
+
+For the person sending it: the brief leaves it to you whether to tell Northgate which customers are affected. The draft declines to name customers but shares the totals (90 units short, 3 orders, 5–12 days late). If you'd rather not share even that much, remove the paragraph that starts "As it stands." The draft also asks Northgate to correct the schedule if it's wrong, which covers checking that the 280 units arrive on day 26.

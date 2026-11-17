@@ -1,0 +1,185 @@
+Coordinator: pipeline
+Email: 02-kendall-tire-options.eml
+From: l.moreno@kendalltire.example
+Subject: PO-7795 - TR-29 tires - two options, please choose
+Run folder: week-05\drafts\20261117-121941-pipeline-02-kendall-tire-options
+
+======================================================================
+Supply analyst (MCP server: supply_mcp_server.py)
+======================================================================
+[supply analyst] step 1: get_part
+  inputs: {"part_id": "TR-29"}
+  result: {
+  "part_id": "TR-29",
+  "description": "29-inch trail tire",
+  "supplier": "Kendall Tire Supply",
+  "on_hand": 120,
+  "used_in": [
+    {
+      "model": "Trail 29",
+      "qty_per_bike": 2
+    }
+  ],
+  "inbound": [
+    {
+      "po_number": "PO-7795",
+      "supplier": "Kendall Tire Supply",
+      "...
+
+[supply analyst] step 2: get_orders_for_part
+  inputs: {"part_id": "TR-29"}
+  result: {
+  "part_id": "TR-29",
+  "orders": [
+    {
+      "order_id": "O-1046",
+      "customer": "Hilltop Outfitters",
+      "model": "Trail 29",
+      "bikes": 80,
+      "units_needed": 160,
+      "ship_day": 9,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1049",
+      "customer": "Pine V...
+
+[supply analyst] step 3: check_coverage
+  inputs: {"part_id": "TR-29", "po_number": "PO-7795", "new_arrivals": [{"qty": 160, "arrives_in_days": 8}, {"qty": 240, "arrives_in_days": 22}]}
+  result: {
+  "part_id": "TR-29",
+  "on_hand": 120,
+  "schedule_used": [
+    {
+      "source": "PO-7795 (revised)",
+      "qty": 160,
+      "arrives_in_days": 8
+    },
+    {
+      "source": "PO-7795 (revised)",
+      "qty": 240,
+      "arrives_in_days": 22
+    }
+  ],
+  "replaced_po": {
+    "po_number": "PO-77...
+
+[supply analyst] step 4: check_coverage
+  inputs: {"part_id": "TR-29", "po_number": "PO-7795", "new_arrivals": [{"qty": 400, "arrives_in_days": 12}]}
+  result: {
+  "part_id": "TR-29",
+  "on_hand": 120,
+  "schedule_used": [
+    {
+      "source": "PO-7795 (revised)",
+      "qty": 400,
+      "arrives_in_days": 12
+    }
+  ],
+  "replaced_po": {
+    "po_number": "PO-7795",
+    "qty": 400,
+    "arrives_in_days": 8
+  },
+  "total_needed": 300,
+  "total_supply": 520...
+
+[supply analyst] finished.
+[supply analyst] brief rejected by code check: Each option must be an object with a name and an order_ids list.
+
+[supply analyst] finished.
+Brief:
+{
+  "part_id": "TR-29",
+  "what_changed": "PO-7795 (400 tires, originally due day 8) will now arrive either as 160 on day 8 and 240 on day 22 (Option 1), or all 400 on day 12 (Option 2, the supplier's default if Brookfield doesn't reply within two business days).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1046",
+      "customer": "Hilltop Outfitters",
+      "model": "Trail 29",
+      "bikes": 80,
+      "units_short": 40,
+      "ship_day": 9,
+      "ready_day": 12,
+      "days_late": 3,
+      "late_penalty": false
+    }
+  ],
+  "options": [
+    {
+      "name": "Option 1: 160 tires on day 8, remaining 240 on day 22",
+      "order_ids": []
+    },
+    {
+      "name": "Option 2: all 400 tires on day 12 (supplier default)",
+      "order_ids": [
+        "O-1046"
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose Option 1 or Option 2 for PO-7795 and tell Kendall Tire Supply within two business days. Option 1 puts no orders at risk. Option 2 (the default if we don't reply) makes O-1046 for Hilltop Outfitters 3 days late (ready day 12 instead of day 9, 40 tires short, no late penalty).",
+    "If Option 2 is chosen or applied by default, decide how to handle Hilltop Outfitters' O-1046 shipping 3 days late."
+  ],
+  "supplier_questions": [
+    "Which option does Brookfield prefer (Option 1: split shipment, or Option 2: full shipment four days late)? Reply needed within two business days, or Kendall will go with Option 2."
+  ]
+}
+
+======================================================================
+Supplier reply
+======================================================================
+[supplier-writer] draft 1 for the supplier:
+Hi Lisa,
+
+Thank you for letting us know about the mixing machine and for offering options on PO-7795.
+
+To confirm our understanding, the 400 TR-29 trail tires will now ship in one of two ways:
+
+- **Option 1:** 160 tires on the scheduled date and the remaining 240 two weeks later.
+- **Option 2:** all 400 tires together, four days after the scheduled date. This is your default if you don't hear from us within two business days.
+
+Here is the impact on our side:
+
+- **Option 1:** None of our orders would be delayed.
+- **Option 2:** One of our orders would be delayed by 3 days, and we would be 40 ti...
+
+[reviewer] round 1: REVISE
+REVISE
+
+- **Rule 3:** The "Here is the impact on our side" section describes a customer's order. "One of our orders would be delayed by 3 days, and we would be 40 tires short when we need them" gives the length of that order's delay and its shortfall.
+  - Replace the Option 2 bullet with a general line, such as: "Option 2 would cause problems for our production schedule."
+  - Keep the Option 1 bullet, or merge both into one sentence: "Option 1 works for our schedule; Option 2 would cause us difficulties."
+  - The request "could you ship at least 40 tires on the scheduled date" can stay, becaus...
+
+[supplier-writer] draft 2 for the supplier:
+I've kept both points as they were because the drafting rules require them:
+
+- **Impact (Rule 3):** The rules allow stating how many units are short and how many days orders will be delayed, as long as no customer is named, described, or hinted at. The draft does that. The rules also require stating the impact in units and days, so replacing it with a general line would drop required content.
+- **Confirmation (Rule 2):** When the supplier needs a decision, the rules require saying that Brookfield will confirm by the time they asked for. This promises a reply, not a particular option. If the te...
+
+[reviewer] round 2: REVISE
+REVISE
+
+**Rule 3: describes a customer's order.** "One of our orders would be delayed by 3 days, and we would be 40 tires short when we need them" gives the delay and shortfall of a specific customer order (O-1046). The request "could you ship at least 40 tires on the scheduled date" points to that same order.
+- Change the Option 2 impact line to something general, such as: "Option 2 would cause a delay on our side. Option 1 would not."
+- Change the first question to: "Under Option 2, could you ship part of the order on the scheduled date, ahead of the rest?"
+
+**Rule 2: promises a deadline the...
+
+======================================================================
+RESULT (pipeline)
+======================================================================
+Needs a decision by a person: yes
+Summary: PO-7795 (400 tires, originally due day 8) will now arrive either as 160 on day 8 and 240 on day 22 (Option 1), or all 400 on day 12 (Option 2, the supplier's default if Brookfield doesn't reply within two business days). Option 1: 160 tires on day 8, remaining 240 on day 22: puts no orders at risk. Option 2: all 400 tires on day 12 (supplier default): puts O-1046 at risk. No customer notices were drafted, because which orders are late depends on the option chosen. Decision needed: Choose Option 1 or Option 2 for PO-7795 and tell Kendall Tire Supply within two business days. Option 1 puts no orders at risk. Option 2 (the default if we don't reply) makes O-1046 for Hilltop Outfitters 3 days late (ready day 12 instead of day 9, 40 tires short, no late penalty). Decision needed: If Option 2 is chosen or applied by default, decide how to handle Hilltop Outfitters' O-1046 shipping 3 days late.
+
+Drafts (nothing was sent):
+  supplier-reply.txt [supplier]: NOT APPROVED - a person must fix this draft before using it
+
+Saved in week-05\drafts\20261117-121941-pipeline-02-kendall-tire-options
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             4        13,332          2,117
+supplier-writer            2         3,540          2,067
+reviewer                   2         3,295          2,841
+Total                      8        20,167          7,025

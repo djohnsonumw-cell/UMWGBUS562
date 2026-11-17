@@ -1,0 +1,17 @@
+Coordinator: pipeline
+Email: 02-kendall-tire-options.eml
+Subject: PO-7795 - TR-29 tires - two options, please choose
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+PO-7795 (400 tires, originally due day 8) will now arrive either as 160 on day 8 and 240 on day 22 (Option 1), or all 400 on day 12 (Option 2, the supplier's default if Brookfield doesn't reply within two business days). Option 1: 160 tires on day 8, remaining 240 on day 22: puts no orders at risk. Option 2: all 400 tires on day 12 (supplier default): puts O-1046 at risk. No customer notices were drafted, because which orders are late depends on the option chosen. Decision needed: Choose Option 1 or Option 2 for PO-7795 and tell Kendall Tire Supply within two business days. Option 1 puts no orders at risk. Option 2 (the default if we don't reply) makes O-1046 for Hilltop Outfitters 3 days late (ready day 12 instead of day 9, 40 tires short, no late penalty). Decision needed: If Option 2 is chosen or applied by default, decide how to handle Hilltop Outfitters' O-1046 shipping 3 days late.
+
+DRAFTS
+- supplier-reply.txt [supplier]: NOT APPROVED - a person must fix this draft before using it
+
+USAGE
+Agent              API calls  Input tokens  Output tokens
+supply analyst             4        13,332          2,117
+supplier-writer            2         3,540          2,067
+reviewer                   2         3,295          2,841
+Total                      8        20,167          7,025

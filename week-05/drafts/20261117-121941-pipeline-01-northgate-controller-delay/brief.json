@@ -1,0 +1,49 @@
+{
+  "part_id": "MC-500",
+  "what_changed": "PO-7781 (400 MC-500 motor controllers, originally all due on day 5) will now arrive as 120 units on day 5 and the remaining 280 units on day 26 (three weeks after the original date).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1043",
+      "customer": "City of Ashford Bike Share",
+      "model": "Commuter E",
+      "bikes": 100,
+      "units_short": 10,
+      "ship_day": 14,
+      "ready_day": 26,
+      "days_late": 12,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-1044",
+      "customer": "Main Street Bikes",
+      "model": "Cargo E",
+      "bikes": 30,
+      "units_short": 30,
+      "ship_day": 18,
+      "ready_day": 26,
+      "days_late": 8,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1045",
+      "customer": "Lakeview Rentals",
+      "model": "Commuter E",
+      "bikes": 50,
+      "units_short": 50,
+      "ship_day": 21,
+      "ready_day": 26,
+      "days_late": 5,
+      "late_penalty": false
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Whether to take up Karen Walsh's offer to discuss other options this week, for example asking for part of the remaining 280 units before day 14 so O-1043 (late penalty) is covered, or before days 18 and 21 for O-1044 and O-1045.",
+    "How to handle the penalty-bearing O-1043 for City of Ashford Bike Share (10 units short on day 14, ready day 26), and whether to warn City of Ashford Bike Share, Main Street Bikes and Lakeview Rentals about the delays.",
+    "Whether to tell Northgate which customers are most affected, and what to share.",
+    "Confirm with Northgate that 'three weeks later' means the 280 units arrive on day 26."
+  ],
+  "supplier_questions": [
+    "Which of Brookfield's customers are most affected by the revised schedule?"
+  ]
+}

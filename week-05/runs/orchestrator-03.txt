@@ -1,0 +1,28 @@
+Coordinator: orchestrator
+Email: 03-keystone-on-schedule.eml
+From: b.foley@keystonebattery.example
+Subject: PO-7790 - BP-48 battery packs - shipped on schedule
+Run folder: week-05\drafts\20261117-121941-orchestrator-03-keystone-on-schedule
+
+======================================================================
+Orchestrator
+======================================================================
+[orchestrator] step 1: finish
+  inputs: {"summary": "Keystone Battery Co. (Brian Foley) says PO-7790 for 150 BP-48 battery packs left their warehouse today and should arrive on the scheduled date. They also say Brookfield doesn't need to do anything. Nothing about the quantity or timing has changed, so I didn't run the supply analysis or draft any replies or customer notices. One limit: I didn't check the 150 units or the scheduled date against our purchase order record. You might want to quickly confirm both and note the shipment in the PO.", "needs_decision": false}
+  result: Job finished.
+
+[orchestrator] finished (finish tool).
+======================================================================
+RESULT (orchestrator)
+======================================================================
+Needs a decision by a person: no
+Summary: Keystone Battery Co. (Brian Foley) says PO-7790 for 150 BP-48 battery packs left their warehouse today and should arrive on the scheduled date. They also say Brookfield doesn't need to do anything. Nothing about the quantity or timing has changed, so I didn't run the supply analysis or draft any replies or customer notices. One limit: I didn't check the 150 units or the scheduled date against our purchase order record. You might want to quickly confirm both and note the shipment in the PO.
+
+Drafts (nothing was sent):
+  none
+
+Saved in week-05\drafts\20261117-121941-orchestrator-03-keystone-on-schedule
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               1         1,357            358
+Total                      1         1,357            358

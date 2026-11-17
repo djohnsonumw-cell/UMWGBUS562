@@ -1,0 +1,43 @@
+To: Lisa Moreno <l.moreno@kendalltire.example>
+Subject: Re: PO-7795 - TR-29 tires - two options, please choose
+From: Purchasing, Brookfield Bicycle Company
+In reply to: 02-kendall-tire-options.eml
+Review: approved after one revision
+Status: draft only - not sent
+
+DRAFT
+Hi Lisa,
+
+Thank you for letting us know about the mixing machine at your plant. Here is the change to PO-7795 for 400 TR-29 trail tires as we understand it:
+
+- **Option 1:** 160 tires ship on the scheduled date and the remaining 240 ship two weeks later.
+- **Option 2:** All 400 tires ship together, four days after the scheduled date. You will apply this option if we don't reply within two business days.
+
+Brookfield will confirm which option we prefer within the two business days you asked for.
+
+Timing matters for our production schedule, so please let us know whether either of the following is possible:
+
+1. If we go with Option 2, could you ship at least 40 tires on the original scheduled date and the rest four days later?
+2. If we go with Option 1, could you ship more than 160 tires on the scheduled date, or send the remaining 240 sooner than two weeks later?
+
+It would also help to know when you expect the machine to be repaired, in case that changes what you can offer.
+
+Thank you for working with us on this.
+
+Purchasing, Brookfield Bicycle Company
+
+REVIEW NOTES
+Round 1: REVISE
+REVISE
+
+Rule 3: The draft describes a customer's order to the supplier. "Option 2: One of our orders would be 40 tires short and 3 days late" gives the shortfall and lateness of a specific downstream order. Delete the whole "For planning, here is how each option affects us" section (both bullets). If you want to give the supplier a reason, use a general line like "Timing matters for our production schedule."
+
+Everything else passes. The numbers and the PO number match the facts. No option is accepted. The draft only asks questions and says Brookfield will reply within the window. The tone is firm and cooperative. The question asking for at least 40 tires on the original date can stay, because it is a purchasing request.
+Round 2: APPROVE
+APPROVE
+
+- **Rule 1:** All numbers come from the facts. That covers PO-7795, TR-29, 400, 160, 240, two weeks, four days, and two business days. The 40 matches total_units_short.
+- **Rule 2:** The draft makes no new promise. Its only commitment is to reply within the two-business-day window that Kendall set and the brief already calls for.
+- **Rule 3:** No customer is named and no customer order is described. The reason is given only as "our production schedule."
+- **Rule 5:** The draft doesn't choose an option. Both requests are conditional ("If we go with…"), and nothing agrees to a cost or cancels anything.
+- **Rule 6:** The tone is firm and cooperative. The draft asks for specific alternatives and the repair timeline, and it thanks the supplier.

@@ -1,0 +1,36 @@
+{
+  "part_id": "TR-29",
+  "what_changed": "PO-7795 (400 tires, originally due day 8) will now arrive either as 160 on day 8 and 240 on day 22 (Option 1), or all 400 on day 12 (Option 2, the supplier's default if Brookfield doesn't reply within two business days).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1046",
+      "customer": "Hilltop Outfitters",
+      "model": "Trail 29",
+      "bikes": 80,
+      "units_short": 40,
+      "ship_day": 9,
+      "ready_day": 12,
+      "days_late": 3,
+      "late_penalty": false
+    }
+  ],
+  "options": [
+    {
+      "name": "Option 1: 160 tires on day 8, remaining 240 on day 22",
+      "order_ids": []
+    },
+    {
+      "name": "Option 2: all 400 tires on day 12 (supplier default)",
+      "order_ids": [
+        "O-1046"
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose Option 1 or Option 2 for PO-7795 and tell Kendall Tire Supply within two business days. Option 1 puts no orders at risk. Option 2 (the default if we don't reply) makes O-1046 for Hilltop Outfitters 3 days late (ready day 12 instead of day 9, 40 tires short, no late penalty).",
+    "If Option 2 is chosen or applied by default, decide how to handle Hilltop Outfitters' O-1046 shipping 3 days late."
+  ],
+  "supplier_questions": [
+    "Which option does Brookfield prefer (Option 1: split shipment, or Option 2: full shipment four days late)? Reply needed within two business days, or Kendall will go with Option 2."
+  ]
+}

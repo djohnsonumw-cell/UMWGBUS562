@@ -1,0 +1,47 @@
+{
+  "part_id": "MC-500",
+  "what_changed": "PO-7781 (400 MC-500 motor controllers) will now arrive in two parts: 120 units on day 5 as scheduled, and the remaining 280 three weeks later on day 26.",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1043",
+      "customer": "City of Ashford Bike Share",
+      "model": "Commuter E",
+      "bikes": 100,
+      "units_short": 10,
+      "ship_day": 14,
+      "ready_day": 26,
+      "days_late": 12,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-1044",
+      "customer": "Main Street Bikes",
+      "model": "Cargo E",
+      "bikes": 30,
+      "units_short": 30,
+      "ship_day": 18,
+      "ready_day": 26,
+      "days_late": 8,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1045",
+      "customer": "Lakeview Rentals",
+      "model": "Commuter E",
+      "bikes": 50,
+      "units_short": 50,
+      "ship_day": 21,
+      "ready_day": 26,
+      "days_late": 5,
+      "late_penalty": false
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide whether to take up Karen Walsh's offer to discuss other options this week, for example getting part of the remaining 280 units before day 14 so that O-1043 (City of Ashford Bike Share, which has a late penalty) ships on time.",
+    "Decide how to handle the late orders O-1043 (12 days late, with a penalty), O-1044 (8 days late) and O-1045 (5 days late), including whether to tell those customers."
+  ],
+  "supplier_questions": [
+    "Which of your customers are most affected, so Northgate can understand the impact on your side?"
+  ]
+}

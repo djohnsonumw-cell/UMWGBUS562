@@ -1,0 +1,21 @@
+Coordinator: pipeline
+Email: 01-northgate-controller-delay.eml
+Subject: PO-7781 - MC-500 controllers - revised shipment schedule
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+PO-7781 (400 MC-500 motor controllers, originally all due on day 5) will now arrive as 120 units on day 5 and the remaining 280 units on day 26 (three weeks after the original date). Orders at risk: O-1043 (City of Ashford Bike Share), 10 units short, 12 days late, LATE PENALTY; O-1044 (Main Street Bikes), 30 units short, 8 days late; O-1045 (Lakeview Rentals), 50 units short, 5 days late. Decision needed: Whether to take up Karen Walsh's offer to discuss other options this week, for example asking for part of the remaining 280 units before day 14 so O-1043 (late penalty) is covered, or before days 18 and 21 for O-1044 and O-1045. Decision needed: How to handle the penalty-bearing O-1043 for City of Ashford Bike Share (10 units short on day 14, ready day 26), and whether to warn City of Ashford Bike Share, Main Street Bikes and Lakeview Rentals about the delays. Decision needed: Whether to tell Northgate which customers are most affected, and what to share. Decision needed: Confirm with Northgate that 'three weeks later' means the 280 units arrive on day 26.
+
+DRAFTS
+- supplier-reply.txt [supplier]: approved
+- notice-O-1043.txt [customer]: approved
+- notice-O-1044.txt [customer]: approved
+- notice-O-1045.txt [customer]: approved
+
+USAGE
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         8,595          1,403
+supplier-writer            1         1,038            843
+reviewer                   4         3,148          2,706
+customer-writer            3         1,087            925
+Total                     11        13,868          5,877

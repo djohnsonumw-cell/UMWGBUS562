@@ -1,0 +1,22 @@
+Coordinator: orchestrator
+Email: 02-kendall-tire-options.eml
+Subject: PO-7795 - TR-29 tires - two options, please choose
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Kendall Tire (PO-7795, 400 TR-29 tires, due day 8) has a machine down and offers two options. Option 1: 160 tires on day 8 and 240 on day 22. Option 2: all 400 on day 12. If Kendall doesn't hear back within two business days, it will use Option 2.
+
+Impact: Option 1 keeps all customer orders on time. Option 2 makes O-1046 (Hilltop Outfitters, 80 Trail 29 bikes, 40 short) 3 days late, ready on day 12 instead of day 9. That order has no late penalty.
+
+Decision needed: Choose an option and reply to Kendall within two business days. Option 1 is the only one that keeps every order on time. A reply to Kendall has been drafted and saved for review (week-05\drafts\20261117-121941-orchestrator-02-kendall-tire-options\supplier-reply.txt). Nothing has been sent. Check the draft states the option you choose before sending. No notice to Hilltop was drafted because it's only needed if you choose Option 2 or don't reply in time. If that happens, ask for a notice for O-1046.
+
+DRAFTS
+- supplier-reply.txt [supplier]: approved after one revision
+
+USAGE
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         6,001            782
+supply analyst             4        13,237          1,958
+supplier-writer            2         3,124          1,209
+reviewer                   2         2,985          1,898
+Total                     11        25,347          5,847

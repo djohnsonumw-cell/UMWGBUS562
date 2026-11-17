@@ -1,0 +1,16 @@
+Coordinator: pipeline
+Email: 03-keystone-on-schedule.eml
+Subject: PO-7790 - BP-48 battery packs - shipped on schedule
+A person needs to make a decision: no
+
+SUMMARY FOR THE PURCHASING MANAGER
+Nothing changed: PO-7790 for 150 BP-48 battery packs left the supplier's warehouse today and is still due on day 6. No customer orders are at risk.
+
+DRAFTS
+- (none) [supplier]: no reply needed
+
+USAGE
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         7,065            766
+supplier-writer            1           629             13
+Total                      4         7,694            779

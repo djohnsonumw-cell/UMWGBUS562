@@ -1,0 +1,41 @@
+To: Karen Walsh <k.walsh@northgatedrive.example>
+Subject: Re: PO-7781 - MC-500 controllers - revised shipment schedule
+From: Purchasing, Brookfield Bicycle Company
+In reply to: 01-northgate-controller-delay.eml
+Review: approved after one revision
+Status: draft only - not sent
+
+DRAFT
+Hello Karen,
+
+Thank you for letting us know about the change to PO-7781.
+
+To confirm our understanding: of the 400 MC-500 motor controllers on PO-7781, you will ship 120 units on the scheduled date, and the remaining 280 units will follow three weeks later.
+
+On our side, this split leaves us 90 units short of what we need. As a result, 3 of our orders will be delayed by between 5 and 12 days. We don't share customer details, but we hope these figures show you the scale of the impact.
+
+Any earlier supply would reduce these delays. Could you let us know:
+
+- Whether any of the remaining 280 units could ship before the three-week date, even as a smaller partial shipment, and if so, how many and when.
+- Whether there is any risk that the 120 units or the later 280 units could slip further, and when you expect to have firm dates from your chip supplier.
+
+Thank you also for offering to discuss other options. If you can send any options in writing, including quantities and dates, we will review them and come back to you about whether a call would be useful.
+
+Kind regards,
+
+Purchasing, Brookfield Bicycle Company
+
+REVIEW NOTES
+Round 1: REVISE
+REVISE
+
+Rule 2: The draft promises a timeline that the facts don't support. "We will let you know this week whether we would like to arrange a call" commits Brookfield to answering by a set date. Whether to take up Karen's offer is still a decision for a person, and nothing in the facts sets a date for it. Change the last sentence of that paragraph to: "If you can send any options in writing, including quantities and dates, we will review them and come back to you about whether a call would be useful." Leave out "this week" and any other timeframe.
+Round 2: APPROVE
+APPROVE
+
+1. **Numbers:** Every number and order number appears in the facts: PO-7781, 400, 120, 280, three weeks, 90 units short, 3 orders, and 5 to 12 days late.
+2. **Promises:** It makes none. It commits only to reviewing written options and replying about a call, with no dates, quantities, discounts or credits.
+3. **Customer details:** It names no customer. The delayed orders are described only as a total (3 orders, 5 to 12 days late), and it states plainly that customer details aren't shared.
+4. **Supplier and cost:** This rule doesn't apply, because the draft goes to a supplier.
+5. **Decisions:** It doesn't accept Karen's offer to discuss options, agree to a cost, or cancel anything. It asks for options in writing, so the decision stays with a person.
+6. **Tone:** It is firm and cooperative. It confirms the schedule, explains the impact, and asks clear questions about earlier supply and the risk of further slips.

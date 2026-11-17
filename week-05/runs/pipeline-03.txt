@@ -1,0 +1,99 @@
+Coordinator: pipeline
+Email: 03-keystone-on-schedule.eml
+From: b.foley@keystonebattery.example
+Subject: PO-7790 - BP-48 battery packs - shipped on schedule
+Run folder: week-05\drafts\20261117-121941-pipeline-03-keystone-on-schedule
+
+======================================================================
+Supply analyst (MCP server: supply_mcp_server.py)
+======================================================================
+[supply analyst] step 1: get_part
+  inputs: {"part_id": "BP-48"}
+  result: {
+  "part_id": "BP-48",
+  "description": "48-volt battery pack",
+  "supplier": "Keystone Battery Co.",
+  "on_hand": 35,
+  "used_in": [
+    {
+      "model": "Cargo E",
+      "qty_per_bike": 1
+    }
+  ],
+  "inbound": [
+    {
+      "po_number": "PO-7790",
+      "supplier": "Keystone Battery Co.",
+     ...
+
+[supply analyst] step 2: get_orders_for_part
+  inputs: {"part_id": "BP-48"}
+  result: {
+  "part_id": "BP-48",
+  "orders": [
+    {
+      "order_id": "O-1042",
+      "customer": "Blue Ridge Bike Shop",
+      "model": "Cargo E",
+      "bikes": 30,
+      "units_needed": 30,
+      "ship_day": 10,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-1044",
+      "customer": "Main S...
+
+[supply analyst] step 3: check_coverage
+  inputs: {"part_id": "BP-48", "po_number": "PO-7790", "new_arrivals": [{"qty": 150, "arrives_in_days": 6}]}
+  result: {
+  "part_id": "BP-48",
+  "on_hand": 35,
+  "schedule_used": [
+    {
+      "source": "PO-7790 (revised)",
+      "qty": 150,
+      "arrives_in_days": 6
+    }
+  ],
+  "replaced_po": {
+    "po_number": "PO-7790",
+    "qty": 150,
+    "arrives_in_days": 6
+  },
+  "total_needed": 80,
+  "total_supply": 185,
+ ...
+
+[supply analyst] finished.
+Brief:
+{
+  "part_id": "BP-48",
+  "what_changed": "Nothing changed: PO-7790 for 150 BP-48 battery packs left the supplier's warehouse today and is still due on day 6.",
+  "orders_at_risk": [],
+  "options": [],
+  "decisions_for_a_person": [],
+  "supplier_questions": []
+}
+
+======================================================================
+Supplier reply
+======================================================================
+[supplier-writer] draft 1 for the supplier:
+NO REPLY NEEDED
+
+======================================================================
+RESULT (pipeline)
+======================================================================
+Needs a decision by a person: no
+Summary: Nothing changed: PO-7790 for 150 BP-48 battery packs left the supplier's warehouse today and is still due on day 6. No customer orders are at risk.
+
+Drafts (nothing was sent):
+  (none) [supplier]: no reply needed
+
+Saved in week-05\drafts\20261117-121941-pipeline-03-keystone-on-schedule
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         7,065            766
+supplier-writer            1           629             13
+Total                      4         7,694            779

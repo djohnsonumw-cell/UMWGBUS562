@@ -1,0 +1,220 @@
+Coordinator: orchestrator
+Email: 02-kendall-tire-options.eml
+From: l.moreno@kendalltire.example
+Subject: PO-7795 - TR-29 tires - two options, please choose
+Run folder: week-05\drafts\20261117-121941-orchestrator-02-kendall-tire-options
+
+======================================================================
+Orchestrator
+======================================================================
+[orchestrator] step 1: run_supply_analyst
+  inputs: {}
+======================================================================
+Supply analyst (MCP server: supply_mcp_server.py)
+======================================================================
+[supply analyst] step 1: get_part
+  inputs: {"part_id": "TR-29"}
+  result: {
+  "part_id": "TR-29",
+  "description": "29-inch trail tire",
+  "supplier": "Kendall Tire Supply",
+  "on_hand": 120,
+  "used_in": [
+    {
+      "model": "Trail 29",
+      "qty_per_bike": 2
+    }
+  ],
+  "inbound": [
+    {
+      "po_number": "PO-7795",
+      "supplier": "Kendall Tire Supply",
+      "...
+
+[supply analyst] step 2: get_orders_for_part
+  inputs: {"part_id": "TR-29"}
+  result: {
+  "part_id": "TR-29",
+  "orders": [
+    {
+      "order_id": "O-1046",
+      "customer": "Hilltop Outfitters",
+      "model": "Trail 29",
+      "bikes": 80,
+      "units_needed": 160,
+      "ship_day": 9,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1049",
+      "customer": "Pine V...
+
+[supply analyst] step 3: check_coverage
+  inputs: {"part_id": "TR-29", "po_number": "PO-7795", "new_arrivals": [{"qty": 160, "arrives_in_days": 8}, {"qty": 240, "arrives_in_days": 22}]}
+  result: {
+  "part_id": "TR-29",
+  "on_hand": 120,
+  "schedule_used": [
+    {
+      "source": "PO-7795 (revised)",
+      "qty": 160,
+      "arrives_in_days": 8
+    },
+    {
+      "source": "PO-7795 (revised)",
+      "qty": 240,
+      "arrives_in_days": 22
+    }
+  ],
+  "replaced_po": {
+    "po_number": "PO-77...
+
+[supply analyst] step 4: check_coverage
+  inputs: {"part_id": "TR-29", "po_number": "PO-7795", "new_arrivals": [{"qty": 400, "arrives_in_days": 12}]}
+  result: {
+  "part_id": "TR-29",
+  "on_hand": 120,
+  "schedule_used": [
+    {
+      "source": "PO-7795 (revised)",
+      "qty": 400,
+      "arrives_in_days": 12
+    }
+  ],
+  "replaced_po": {
+    "po_number": "PO-7795",
+    "qty": 400,
+    "arrives_in_days": 8
+  },
+  "total_needed": 300,
+  "total_supply": 520...
+
+[supply analyst] finished.
+[supply analyst] brief rejected by code check: Each option must be an object with a name and an order_ids list.
+
+[supply analyst] finished.
+Brief:
+{
+  "part_id": "TR-29",
+  "what_changed": "PO-7795 (400 tires, originally due day 8) will now arrive either as 160 on day 8 and 240 on day 22 (Option 1), or all 400 on day 12 (Option 2, which the supplier applies if Brookfield doesn't reply within two business days).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1046",
+      "customer": "Hilltop Outfitters",
+      "model": "Trail 29",
+      "bikes": 80,
+      "units_short": 40,
+      "ship_day": 9,
+      "ready_day": 12,
+      "days_late": 3,
+      "late_penalty": false
+    }
+  ],
+  "options": [
+    {
+      "name": "Option 1: 160 tires on day 8, remaining 240 on day 22",
+      "order_ids": []
+    },
+    {
+      "name": "Option 2: all 400 tires on day 12 (supplier default)",
+      "order_ids": [
+        "O-1046"
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose Option 1 or Option 2 for PO-7795 and tell Kendall Tire Supply within two business days; with no reply, Kendall will apply Option 2. Option 1 keeps all orders on time. Option 2 makes O-1046 (Hilltop Outfitters, no late penalty) 3 days late, ready on day 12 instead of day 9."
+  ],
+  "supplier_questions": [
+    "Which option do you prefer (Option 1: split shipment of 160 now and 240 two weeks later, or Option 2: all 400 four days late)? Please reply within two business days."
+  ]
+}
+
+======================================================================
+Back to the orchestrator
+======================================================================
+  result: {
+  "part_id": "TR-29",
+  "what_changed": "PO-7795 (400 tires, originally due day 8) will now arrive either as 160 on day 8 and 240 on day 22 (Option 1), or all 400 on day 12 (Option 2, which the supplier applies if Brookfield doesn't reply within two business days).",
+  "orders_at_risk": [
+    {
+  ...
+
+[orchestrator] step 2: draft_supplier_reply
+  inputs: {}
+======================================================================
+Supplier reply
+======================================================================
+[supplier-writer] draft 1 for the supplier:
+Hi Lisa,
+
+Thank you for letting us know about the mixing machine at your plant. Here is the change to PO-7795 for 400 TR-29 trail tires as we understand it:
+
+- **Option 1:** 160 tires ship on the scheduled date and the remaining 240 ship two weeks later.
+- **Option 2:** All 400 tires ship together, four days after the scheduled date. You will apply this option if we don't reply within two business days.
+
+For planning, here is how each option affects us:
+
+- **Option 1:** All of our orders stay on time.
+- **Option 2:** One of our orders would be 40 tires short and 3 days late.
+
+Brookfield will c...
+
+[reviewer] round 1: REVISE
+REVISE
+
+Rule 3: The draft describes a customer's order to the supplier. "Option 2: One of our orders would be 40 tires short and 3 days late" gives the shortfall and lateness of a specific downstream order. Delete the whole "For planning, here is how each option affects us" section (both bullets). If you want to give the supplier a reason, use a general line like "Timing matters for our production schedule."
+
+Everything else passes. The numbers and the PO number match the facts. No option is accepted. The draft only asks questions and says Brookfield will reply within the window. The tone is f...
+
+[supplier-writer] draft 2 for the supplier:
+Hi Lisa,
+
+Thank you for letting us know about the mixing machine at your plant. Here is the change to PO-7795 for 400 TR-29 trail tires as we understand it:
+
+- **Option 1:** 160 tires ship on the scheduled date and the remaining 240 ship two weeks later.
+- **Option 2:** All 400 tires ship together, four days after the scheduled date. You will apply this option if we don't reply within two business days.
+
+Brookfield will confirm which option we prefer within the two business days you asked for.
+
+Timing matters for our production schedule, so please let us know whether either of the following is...
+
+[reviewer] round 2: APPROVE
+APPROVE
+
+- **Rule 1:** All numbers come from the facts. That covers PO-7795, TR-29, 400, 160, 240, two weeks, four days, and two business days. The 40 matches total_units_short.
+- **Rule 2:** The draft makes no new promise. Its only commitment is to reply within the two-business-day window that Kendall set and the brief already calls for.
+- **Rule 3:** No customer is named and no customer order is described. The reason is given only as "our production schedule."
+- **Rule 5:** The draft doesn't choose an option. Both requests are conditional ("If we go with…"), and nothing agrees to a cost or c...
+
+======================================================================
+Back to the orchestrator
+======================================================================
+  result: {"status": "approved after one revision", "saved_to": "week-05\\drafts\\20261117-121941-orchestrator-02-kendall-tire-options\\supplier-reply.txt"}
+
+[orchestrator] step 3: finish
+  inputs: {"summary": "Kendall Tire (PO-7795, 400 TR-29 tires, due day 8) has a machine down and offers two options. Option 1: 160 tires on day 8 and 240 on day 22. Option 2: all 400 on day 12. If Kendall doesn't hear back within two business days, it will use Option 2.\n\nImpact: Option 1 keeps all customer orders on time. Option 2 makes O-1046 (Hilltop Outfitters, 80 Trail 29 bikes, 40 short) 3 days late, ready on day 12 instead of day 9. That order has no late penalty.\n\nDecision needed: Choose an option and reply to Kendall within two business days. Option 1 is the only one that keeps every order on time. A reply to Kendall has been drafted and saved for review (week-05\\drafts\\20261117-121941-orchestrator-02-kendall-tire-options\\supplier-reply.txt). Nothing has been sent. Check the draft states the option you choose before sending. No notice to Hilltop was drafted because it's only needed if you choose Option 2 or don't reply in time. If that happens, ask for a notice for O-1046.", "needs_decision": true}
+  result: Job finished.
+
+[orchestrator] finished (finish tool).
+======================================================================
+RESULT (orchestrator)
+======================================================================
+Needs a decision by a person: yes
+Summary: Kendall Tire (PO-7795, 400 TR-29 tires, due day 8) has a machine down and offers two options. Option 1: 160 tires on day 8 and 240 on day 22. Option 2: all 400 on day 12. If Kendall doesn't hear back within two business days, it will use Option 2.
+
+Impact: Option 1 keeps all customer orders on time. Option 2 makes O-1046 (Hilltop Outfitters, 80 Trail 29 bikes, 40 short) 3 days late, ready on day 12 instead of day 9. That order has no late penalty.
+
+Decision needed: Choose an option and reply to Kendall within two business days. Option 1 is the only one that keeps every order on time. A reply to Kendall has been drafted and saved for review (week-05\drafts\20261117-121941-orchestrator-02-kendall-tire-options\supplier-reply.txt). Nothing has been sent. Check the draft states the option you choose before sending. No notice to Hilltop was drafted because it's only needed if you choose Option 2 or don't reply in time. If that happens, ask for a notice for O-1046.
+
+Drafts (nothing was sent):
+  supplier-reply.txt [supplier]: approved after one revision
+
+Saved in week-05\drafts\20261117-121941-orchestrator-02-kendall-tire-options
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         6,001            782
+supply analyst             4        13,237          1,958
+supplier-writer            2         3,124          1,209
+reviewer                   2         2,985          1,898
+Total                     11        25,347          5,847

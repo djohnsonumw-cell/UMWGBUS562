@@ -1,0 +1,206 @@
+Coordinator: orchestrator
+Email: 01-northgate-controller-delay.eml
+From: k.walsh@northgatedrive.example
+Subject: PO-7781 - MC-500 controllers - revised shipment schedule
+Run folder: week-05\drafts\20261117-121941-orchestrator-01-northgate-controller-delay
+
+======================================================================
+Orchestrator
+======================================================================
+[orchestrator] step 1: run_supply_analyst
+  inputs: {}
+======================================================================
+Supply analyst (MCP server: supply_mcp_server.py)
+======================================================================
+[supply analyst] step 1: get_part
+  inputs: {"part_id": "MC-500"}
+  result: {
+  "part_id": "MC-500",
+  "description": "Motor controller",
+  "supplier": "Northgate Drive Systems",
+  "on_hand": 40,
+  "used_in": [
+    {
+      "model": "Commuter E",
+      "qty_per_bike": 1
+    },
+    {
+      "model": "Cargo E",
+      "qty_per_bike": 1
+    }
+  ],
+  "inbound": [
+    {
+      "po_n...
+
+[supply analyst] step 2: get_orders_for_part
+  inputs: {"part_id": "MC-500"}
+  result: {
+  "part_id": "MC-500",
+  "orders": [
+    {
+      "order_id": "O-1041",
+      "customer": "Riverside Cycles",
+      "model": "Commuter E",
+      "bikes": 40,
+      "units_needed": 40,
+      "ship_day": 7,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1042",
+      "customer": "Blue R...
+
+[supply analyst] step 3: check_coverage
+  inputs: {"part_id": "MC-500", "po_number": "PO-7781", "new_arrivals": [{"qty": 120, "arrives_in_days": 5}, {"qty": 280, "arrives_in_days": 26}]}
+  result: {
+  "part_id": "MC-500",
+  "on_hand": 40,
+  "schedule_used": [
+    {
+      "source": "PO-7781 (revised)",
+      "qty": 120,
+      "arrives_in_days": 5
+    },
+    {
+      "source": "PO-7781 (revised)",
+      "qty": 280,
+      "arrives_in_days": 26
+    }
+  ],
+  "replaced_po": {
+    "po_number": "PO-77...
+
+[supply analyst] finished.
+Brief:
+{
+  "part_id": "MC-500",
+  "what_changed": "PO-7781 (400 MC-500 motor controllers) will now arrive in two parts: 120 units on day 5 as scheduled, and the remaining 280 three weeks later on day 26.",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1043",
+      "customer": "City of Ashford Bike Share",
+      "model": "Commuter E",
+      "bikes": 100,
+      "units_short": 10,
+      "ship_day": 14,
+      "ready_day": 26,
+      "days_late": 12,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-1044",
+      "customer": "Main Street Bikes",
+      "model": "Cargo E",
+      "bikes": 30,
+      "units_short": 30,
+      "ship_day": 18,
+      "ready_day": 26,
+      "days_late": 8,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1045",
+      "customer": "Lakeview Rentals",
+      "model": "Commuter E",
+      "bikes": 50,
+      "units_short": 50,
+      "ship_day": 21,
+      "ready_day": 26,
+      "days_late": 5,
+      "late_penalty": false
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide whether to take up Karen Walsh's offer to discuss other options this week, for example getting part of the remaining 280 units before day 14 so that O-1043 (City of Ashford Bike Share, which has a late penalty) ships on time.",
+    "Decide how to handle the late orders O-1043 (12 days late, with a penalty), O-1044 (8 days late) and O-1045 (5 days late), including whether to tell those customers."
+  ],
+  "supplier_questions": [
+    "Which of your customers are most affected, so Northgate can understand the impact on your side?"
+  ]
+}
+
+======================================================================
+Back to the orchestrator
+======================================================================
+  result: {
+  "part_id": "MC-500",
+  "what_changed": "PO-7781 (400 MC-500 motor controllers) will now arrive in two parts: 120 units on day 5 as scheduled, and the remaining 280 three weeks later on day 26.",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1043",
+      "customer": "City of Ashford Bike Share...
+
+[orchestrator] step 2: draft_supplier_reply
+  inputs: {}
+======================================================================
+Supplier reply
+======================================================================
+[supplier-writer] draft 1 for the supplier:
+Hello Karen,
+
+Thank you for letting us know about the change to PO-7781.
+
+To confirm our understanding: of the 400 MC-500 motor controllers on PO-7781, you will ship 120 units on the scheduled date, and the remaining 280 units will follow three weeks later.
+
+On our side, this split leaves us 90 units short of what we need. As a result, 3 of our orders will be delayed by between 5 and 12 days. We don't share customer details, but we hope these figures show you the scale of the impact.
+
+Any earlier supply would reduce these delays. Could you let us know:
+
+- Whether any of the remaining 280 units...
+
+[reviewer] round 1: REVISE
+REVISE
+
+Rule 2: The draft promises a timeline that the facts don't support. "We will let you know this week whether we would like to arrange a call" commits Brookfield to answering by a set date. Whether to take up Karen's offer is still a decision for a person, and nothing in the facts sets a date for it. Change the last sentence of that paragraph to: "If you can send any options in writing, including quantities and dates, we will review them and come back to you about whether a call would be useful." Leave out "this week" and any other timeframe.
+
+[supplier-writer] draft 2 for the supplier:
+Hello Karen,
+
+Thank you for letting us know about the change to PO-7781.
+
+To confirm our understanding: of the 400 MC-500 motor controllers on PO-7781, you will ship 120 units on the scheduled date, and the remaining 280 units will follow three weeks later.
+
+On our side, this split leaves us 90 units short of what we need. As a result, 3 of our orders will be delayed by between 5 and 12 days. We don't share customer details, but we hope these figures show you the scale of the impact.
+
+Any earlier supply would reduce these delays. Could you let us know:
+
+- Whether any of the remaining 280 units...
+
+[reviewer] round 2: APPROVE
+APPROVE
+
+1. **Numbers:** Every number and order number appears in the facts: PO-7781, 400, 120, 280, three weeks, 90 units short, 3 orders, and 5 to 12 days late.
+2. **Promises:** It makes none. It commits only to reviewing written options and replying about a call, with no dates, quantities, discounts or credits.
+3. **Customer details:** It names no customer. The delayed orders are described only as a total (3 orders, 5 to 12 days late), and it states plainly that customer details aren't shared.
+4. **Supplier and cost:** This rule doesn't apply, because the draft goes to a supplier.
+5. **Deci...
+
+======================================================================
+Back to the orchestrator
+======================================================================
+  result: {"status": "approved after one revision", "saved_to": "week-05\\drafts\\20261117-121941-orchestrator-01-northgate-controller-delay\\supplier-reply.txt"}
+
+[orchestrator] step 3: finish
+  inputs: {"summary": "Northgate (PO-7781, 400 MC-500 controllers) will now ship in two parts: 120 on day 5 as planned and 280 on day 26. This puts three orders at risk. O-1043, City of Ashford Bike Share: 100 Commuter E, 10 controllers short, 12 days late, and this order carries a late penalty. O-1044, Main Street Bikes: 30 Cargo E, 8 days late. O-1045, Lakeview Rentals: 50 Commuter E, 5 days late. A draft reply to Karen Walsh is saved for review at week-05\\drafts\\20261117-121941-orchestrator-01-northgate-controller-delay\\supplier-reply.txt. Nothing has been sent. Decisions needed: (1) Whether to take Karen's offer to talk this week, mainly to get at least 10 more controllers before day 14 so O-1043 avoids its penalty. (2) Karen asked which of our customers are most affected. Before sending the draft, check that it doesn't name our customers or share order details. Only give her the quantities and dates we need. (3) Whether and when to tell the three customers. I held off on drafting customer notices because the delivery dates may change after the talk with Northgate. Once the plan is settled, I can draft them.", "needs_decision": true}
+  result: Job finished.
+
+[orchestrator] finished (finish tool).
+======================================================================
+RESULT (orchestrator)
+======================================================================
+Needs a decision by a person: yes
+Summary: Northgate (PO-7781, 400 MC-500 controllers) will now ship in two parts: 120 on day 5 as planned and 280 on day 26. This puts three orders at risk. O-1043, City of Ashford Bike Share: 100 Commuter E, 10 controllers short, 12 days late, and this order carries a late penalty. O-1044, Main Street Bikes: 30 Cargo E, 8 days late. O-1045, Lakeview Rentals: 50 Commuter E, 5 days late. A draft reply to Karen Walsh is saved for review at week-05\drafts\20261117-121941-orchestrator-01-northgate-controller-delay\supplier-reply.txt. Nothing has been sent. Decisions needed: (1) Whether to take Karen's offer to talk this week, mainly to get at least 10 more controllers before day 14 so O-1043 avoids its penalty. (2) Karen asked which of our customers are most affected. Before sending the draft, check that it doesn't name our customers or share order details. Only give her the quantities and dates we need. (3) Whether and when to tell the three customers. I held off on drafting customer notices because the delivery dates may change after the talk with Northgate. Once the plan is settled, I can draft them.
+
+Drafts (nothing was sent):
+  supplier-reply.txt [supplier]: approved after one revision
+
+Saved in week-05\drafts\20261117-121941-orchestrator-01-northgate-controller-delay
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         6,323            947
+supply analyst             3         8,593          1,328
+supplier-writer            2         2,921          1,183
+reviewer                   2         2,666          1,379
+Total                     10        20,503          4,837
