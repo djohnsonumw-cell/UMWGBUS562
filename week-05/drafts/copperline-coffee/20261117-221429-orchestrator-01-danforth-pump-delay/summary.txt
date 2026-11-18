@@ -1,0 +1,38 @@
+Coordinator: orchestrator
+Email: 01-danforth-pump-delay.eml
+Subject: PO-5512 - PU-20 pumps - partial shipment
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Danforth Pump Works notified that PO-5512 (200 PU-20 pumps) will arrive in two parts: 40 on schedule, 160 fifteen days late. This affects 3 Copperline orders: O-2203 (Elm State University Dining, 7 days late, has late penalty), O-2204 (Kettle & Crumb Bakery, 4 days late, no penalty), and O-2205 (Tall Pines Coffee House, 2 days late, has late penalty).
+
+Drafted and saved for review:
+1. Supplier reply to Diane Kessler acknowledging the delay and giving only aggregate figures (3 orders delayed, 55 units short, 2-7 days late) without disclosing customer names/order numbers, per data-privacy concern flagged by the analyst.
+2. Customer notices for all three affected orders explaining the delay.
+
+A person needs to: (a) confirm the decision not to share customer-identifying details with the supplier, (b) decide how to handle the two late-penalty orders (O-2203 and O-2205) - e.g., whether to expedite, negotiate penalty waivers, or accept the delay - and review/approve all drafts before sending.
+
+Drafts saved (4) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Diane Kessler. The writer was given totals only (3 order(s) delayed, 55 units short, 2-7 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 1 revision(s).
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 7 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2204.txt [customer]: Notice to Kettle & Crumb Bakery about order O-2204 (10 Cafe Duo), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 2 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (3):
+  - supplier-reply.txt: an order with a late penalty is affected
+  - notice-O-2203.txt: an order with a late penalty is affected
+  - notice-O-2205.txt: an order with a late penalty is affected
+
+Decisions for a person (2):
+  - Decide how to handle the three at-risk orders (O-2203, O-2204, O-2205), especially O-2203 and O-2205 which carry late penalties — consider expediting, partial shipments, or customer notification/negotiation.
+  - Decide whether to share customer order details (names and quantities) with Danforth Pump Works as requested, given this is customer-identifying information.
+
+Total tokens: 27,192 (23,909 input + 3,283 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         7,600            750
+supply analyst             3         8,830            770
+supplier writer            2         2,330            453
+reviewer                   5         4,089            826
+customer writer            3         1,060            484
+Total                     16        23,909          3,283

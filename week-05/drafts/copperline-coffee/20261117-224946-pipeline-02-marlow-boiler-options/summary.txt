@@ -1,0 +1,30 @@
+Coordinator: pipeline
+Email: 02-marlow-boiler-options.eml
+Subject: PO-5520 - BL-12 boilers - please choose a shipping option
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+PO-5520 (200 BL-12 boilers, originally due day 7) will now ship either as 80 units on day 7 plus 120 units on day 21 (Option A), or as all 200 units on day 13 (Option B), per the supplier's offer. Option A: 80 on day 7, 120 on day 21: puts O-2205 at risk. Option B: 200 on day 13: puts O-2203 at risk.
+
+Drafts saved (3) - nothing was sent:
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 1 day later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - supplier-reply.txt [supplier]: Reply to Victor Lindqvist. The writer was given totals only (per option: Option A: 80 on day 7, 120 on day 21: 1 order(s) delayed, 5 units short, 4 days late; Option B: 200 on day 13: 1 order(s) delayed, 40 units short, 1 day late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (3):
+  - notice-O-2205.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option A: 80 on day 7, 120 on day 21; the notice uses the analyst's numbers for that case)
+  - notice-O-2203.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option B: 200 on day 13; the notice uses the analyst's numbers for that case)
+  - supplier-reply.txt: an order with a late penalty is affected
+
+Decisions for a person (2):
+  - Choose between Option A (puts order O-2205, 4 days late, at risk) and Option B (puts order O-2203, 1 day late, at risk) — both at-risk orders carry a late penalty, so weigh which delay/penalty is more acceptable.
+  - Respond to Marlow Metalworks within three business days, or Option B will be applied by default.
+
+Total tokens: 16,305 (14,795 input + 1,510 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         9,989            961
+customer writer            2           737            314
+reviewer                   3         2,830             21
+supplier writer            1         1,239            214
+Total                      9        14,795          1,510

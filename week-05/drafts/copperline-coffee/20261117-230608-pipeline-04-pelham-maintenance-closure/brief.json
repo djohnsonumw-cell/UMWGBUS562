@@ -1,0 +1,14 @@
+{
+  "part_id": "SW-3",
+  "what_changed": "No change: PO-5540 (60 units) still arrives on day 11 as originally scheduled, unaffected by the plant's one-week maintenance closure starting on day 28.",
+  "orders_at_risk": [],
+  "options": [],
+  "decisions_for_a_person": [],
+  "supplier_questions": [],
+  "slack": {
+    "part_id": "SW-3",
+    "extra_days": null,
+    "first_order_affected": null,
+    "note": "No order would be late even if the new SW-3 schedule slipped 14 more days."
+  }
+}

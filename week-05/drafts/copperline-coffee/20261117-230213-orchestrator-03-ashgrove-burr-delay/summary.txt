@@ -1,0 +1,27 @@
+Coordinator: orchestrator
+Email: 03-ashgrove-burr-delay.eml
+Subject: PO-5531 - BR-64 burr sets - arriving 3 days late
+A person needs to make a decision: no
+
+SUMMARY FOR THE PURCHASING MANAGER
+Ashgrove's PO-5531 (120 BR-64 burr sets) will arrive 3 days late (new date: Mon Nov 30, 2026). The supply analyst confirmed this causes no delayed or short customer orders currently - there is 1 day of slack before any issue, and 2 days before Union Market Grocers' order (O-2207) would be 20 units short with a late penalty. A supplier reply has been drafted confirming the new date, noting no impact on our side, and asking them to flag if the date slips further. No customer notices were needed since no orders are currently at risk.
+
+Drafts saved (1) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Priya Raman. The writer was given totals only (0 order(s) delayed, 0 units short), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (0):
+  - none
+
+Decisions for a person (0):
+  - none
+
+Watch: The new BR-64 schedule can slip 1 more day with no order late. At 2 more days, O-2207 (Union Market Grocers, late penalty) would be 20 units short.
+
+Total tokens: 17,003 (15,735 input + 1,268 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         6,385            397
+supply analyst             3         7,359            482
+supplier writer            1           899            173
+reviewer                   1         1,092            216
+Total                      8        15,735          1,268

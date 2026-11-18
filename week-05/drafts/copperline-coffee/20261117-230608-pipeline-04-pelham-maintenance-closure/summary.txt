@@ -1,0 +1,26 @@
+Coordinator: pipeline
+Email: 04-pelham-maintenance-closure.eml
+Subject: Plant maintenance closure - PO-5540 not affected
+A person needs to make a decision: no
+
+SUMMARY FOR THE PURCHASING MANAGER
+No change: PO-5540 (60 units) still arrives on day 11 as originally scheduled, unaffected by the plant's one-week maintenance closure starting on day 28. No customer orders are at risk. No order would be late even if the new SW-3 schedule slipped 14 more days.
+
+Drafts saved (1) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Owen Brady. The writer was given totals only (0 order(s) delayed, 0 units short), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (0):
+  - none
+
+Decisions for a person (0):
+  - none
+
+Watch: No order would be late even if the new SW-3 schedule slipped 14 more days.
+
+Total tokens: 10,052 (9,292 input + 760 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         7,456            417
+supplier writer            1           854            108
+reviewer                   1           982            235
+Total                      5         9,292            760

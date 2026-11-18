@@ -1,0 +1,49 @@
+{
+  "part_id": "BL-12",
+  "what_changed": "Marlow Metalworks cannot ship PO-5520 (200 BL-12 boilers) as a single 200-unit shipment on day 7 as originally scheduled; they offer either a split shipment of 80 on day 7 and 120 on day 21 (Option A), or the full 200 units together on day 13 (Option B, six days late).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-2205",
+      "customer": "Tall Pines Coffee House",
+      "product": "Cafe One",
+      "quantity": 25,
+      "units_short": 5,
+      "ship_day": 17,
+      "ready_day": 21,
+      "days_late": 4,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-2203",
+      "customer": "Elm State University Dining",
+      "product": "Cafe One",
+      "quantity": 50,
+      "units_short": 40,
+      "ship_day": 12,
+      "ready_day": 13,
+      "days_late": 1,
+      "late_penalty": true
+    }
+  ],
+  "options": [
+    {
+      "name": "Option A: 80 on day 7, 120 on day 21",
+      "order_ids": [
+        "O-2205"
+      ]
+    },
+    {
+      "name": "Option B: all 200 on day 13",
+      "order_ids": [
+        "O-2203"
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose between Option A (risks order O-2205, 4 days late, late_penalty applies) and Option B (risks order O-2203, 1 day late, late_penalty applies) within 3 business days, or the supplier will default to Option B.",
+    "Consider which late-penalty order is more costly/important to protect: O-2203 (50 units, 40 short, 1 day late) vs O-2205 (25 units, 5 short, 4 days late)."
+  ],
+  "supplier_questions": [
+    "Which shipping option (A or B) would you like for PO-5520?"
+  ]
+}

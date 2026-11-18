@@ -1,0 +1,11 @@
+order_id,customer,contact_email,product,units,ship_by_day,late_penalty
+O-2201,Morning Ritual Cafe,orders@morningritualcafe.example,Cafe One,20,6,no
+O-2202,Harbor Hotel Group,purchasing@harborhotelgroup.example,Cafe Duo,15,9,no
+O-2203,Elm State University Dining,dining@elmstate.example,Cafe One,50,12,yes
+O-2204,Kettle & Crumb Bakery,owner@kettleandcrumb.example,Cafe Duo,10,15,no
+O-2205,Tall Pines Coffee House,hello@tallpinescoffee.example,Cafe One,25,17,yes
+O-2206,Grindstone Coffee Bar,orders@grindstonecoffee.example,Grinder 64,30,8,no
+O-2207,Union Market Grocers,buying@unionmarketgrocers.example,Grinder 64,60,14,yes
+O-2208,Northside Roasters,orders@northsideroasters.example,Cafe Duo,12,30,no
+O-2209,Saltmarsh Inn,frontdesk@saltmarshinn.example,Grinder 64,25,26,no
+O-2210,Bright Day Coworking,office@brightdaycowork.example,Cafe One,15,33,no

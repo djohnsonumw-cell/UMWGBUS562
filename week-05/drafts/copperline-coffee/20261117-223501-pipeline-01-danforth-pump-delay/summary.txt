@@ -1,0 +1,32 @@
+Coordinator: pipeline
+Email: 01-danforth-pump-delay.eml
+Subject: PO-5512 - PU-20 pumps - partial shipment
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Instead of all 200 pumps arriving on day 4, only 40 will arrive on day 4 and the remaining 160 will arrive on day 19 (15 days later). Orders at risk: O-2203 (Elm State University Dining), 10 units short, 7 days late, LATE PENALTY; O-2204 (Kettle & Crumb Bakery), 20 units short, 4 days late; O-2205 (Tall Pines Coffee House), 25 units short, 2 days late, LATE PENALTY.
+
+Drafts saved (4) - nothing was sent:
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 7 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 1 revision(s).
+  - notice-O-2204.txt [customer]: Notice to Kettle & Crumb Bakery about order O-2204 (10 Cafe Duo), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 2 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - supplier-reply.txt [supplier]: Reply to Diane Kessler. The writer was given totals only (3 order(s) delayed, 55 units short, 2-7 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (3):
+  - notice-O-2203.txt: an order with a late penalty is affected
+  - notice-O-2205.txt: an order with a late penalty is affected
+  - supplier-reply.txt: an order with a late penalty is affected
+
+Decisions for a person (3):
+  - Decide whether to expedite/source pumps elsewhere for O-2203 and O-2205 (late_penalty orders) given they'll ship ~7 and ~2 days late respectively.
+  - Decide whether to accept the 4-day delay for O-2204 (no penalty) or seek alternative supply.
+  - Decide what information to send Danforth about the affected customer orders, since names/quantities were requested but may be sensitive to share externally.
+
+Total tokens: 17,812 (15,576 input + 2,236 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         8,830            782
+customer writer            4         1,783            696
+reviewer                   5         3,892            461
+supplier writer            1         1,071            297
+Total                     13        15,576          2,236

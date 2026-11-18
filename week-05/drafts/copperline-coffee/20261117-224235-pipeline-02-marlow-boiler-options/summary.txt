@@ -1,0 +1,30 @@
+Coordinator: pipeline
+Email: 02-marlow-boiler-options.eml
+Subject: PO-5520 - BL-12 boilers - please choose a shipping option
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Original single arrival of 200 boilers on day 7 is being split/delayed: Option A ships 80 on day 7 and 120 on day 21; Option B ships all 200 on day 13. Option A (80 on day 7, 120 on day 21): puts O-2205 at risk. Option B (200 on day 13): puts O-2203 at risk.
+
+Drafts saved (3) - nothing was sent:
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 1 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - supplier-reply.txt [supplier]: Reply to Victor Lindqvist. The writer was given totals only (2 order(s) delayed, 45 units short, 1-4 days late; 2 supplier option(s) compared), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (3):
+  - notice-O-2205.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option A (80 on day 7, 120 on day 21); the notice uses the analyst's numbers for that case)
+  - notice-O-2203.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option B (200 on day 13); the notice uses the analyst's numbers for that case)
+  - supplier-reply.txt: an order with a late penalty is affected
+
+Decisions for a person (2):
+  - Choose between Option A (puts order O-2205, 5 units short, 4 days late, late_penalty applies) and Option B (puts order O-2203, 40 units short, 1 day late, late_penalty applies) within the supplier's 3-business-day deadline.
+  - If no decision is made by the deadline, the supplier will default to Option B, which puts O-2203 at risk instead of O-2205 — confirm whether this default is acceptable.
+
+Total tokens: 23,404 (20,537 input + 2,867 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             4        15,807          1,528
+customer writer            2           737            279
+reviewer                   3         2,807            781
+supplier writer            1         1,186            279
+Total                     10        20,537          2,867

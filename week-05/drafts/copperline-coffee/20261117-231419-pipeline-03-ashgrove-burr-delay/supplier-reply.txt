@@ -1,0 +1,22 @@
+To: Priya Raman <p.raman@ashgroveprecision.example>
+Subject: Re: PO-5531 - BR-64 burr sets - arriving 3 days late
+From: Purchasing, Copperline Coffee Machines
+In reply to: 03-ashgrove-burr-delay.eml
+Needs a person: no
+Review: APPROVE after 0 revision(s)
+Summary: Reply to Priya Raman. The writer was given totals only (0 order(s) delayed, 0 units short), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hello Priya,
+
+Thank you for the update. We confirm PO-5531 (120 BR-64 burr sets) is now expected on Monday, November 30, 2026, instead of Friday, November 27, 2026. Based on what we have scheduled, this does not cause any shortages or delays on our end.
+
+That said, this new date is tight for us, so please hold Monday, November 30, 2026 as firm, and let us know right away if there is any risk of it slipping further.
+
+Best regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE

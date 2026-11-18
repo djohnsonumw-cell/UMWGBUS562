@@ -1,44 +1,51 @@
-"""MCP server for Brookfield Bicycle Company's supply data: parts, orders, coverage.
+"""MCP server for a company's supply data: parts, orders, coverage.
 
-Built with the official Python MCP SDK (the `mcp` package). It reads the CSV files in
-week-05/brookfield-bikes (or the folder given with --data) each time a tool runs, so
-edits to the data take effect right away. Days are counted from today (day 0).
+Built with the official Python MCP SDK (the `mcp` package). It serves the company folder
+named with --org (default: week-05/brookfield-bikes), which holds parts.csv, orders.csv,
+inbound.csv, bill-of-materials.csv, and suppliers.csv. It reads the CSV files each time a
+tool runs, so edits to the data take effect right away. Days are counted from today (day 0).
+
+Column names differ between companies, so none are assumed. load_table() works out from
+each file's header row which column holds what (for example, the product, the quantity,
+the parts per unit, and the ship day), and returns rows under standard names. Run with
+--columns to see what it found.
 
 Tools (all read-only)
-- get_part(part_id): stock on hand, scheduled shipments, and the bike models that
-  use the part (with parts per bike).
-- get_orders_for_part(part_id): the open orders that need the part, earliest ship
-  day first, with units needed (bikes x parts per bike), ship day, and late penalty.
-- check_coverage(part_id, arrivals): a new list of arrivals ({qty, day}) that
-  replaces ALL of the part's scheduled shipments. Orders are filled complete, in
-  ship-day order: an order ships only when stock covers all of it, and no order
-  ships ahead of an earlier one, so a short order holds up the ones after it. Each
-  order comes back covered, or with its units short on its ship day and the first
-  day it can ship (ready_day; null if this schedule never covers it).
+- get_part(part_id): stock on hand, scheduled shipments, and the products that use the
+  part (with parts per unit).
+- get_orders_for_part(part_id): the open orders that need the part, earliest ship day
+  first, with units needed (quantity x parts per unit), ship day, and late penalty.
+- check_coverage(part_id, arrivals): a new list of arrivals ({qty, day}) that replaces
+  ALL of the part's scheduled shipments. Orders are filled complete, in ship-day order:
+  an order ships only when stock covers all of it, and no order ships ahead of an
+  earlier one, so a short order holds up the ones after it. Each order comes back
+  covered, or with its units short on its ship day and the first day it can ship
+  (ready_day; null if this schedule never covers it).
 
-Because orders are filled complete and in order, an order can ship on the first day
-that stock on hand plus everything arrived by then (an arrival on that day counts)
-covers it and every order before it. All arithmetic is done here, in code, so an
-agent never has to work out coverage itself.
+Because orders are filled complete and in order, an order can ship on the first day that
+stock on hand plus everything arrived by then (an arrival on that day counts) covers it
+and every order before it. All arithmetic is done here, in code, so an agent never has to
+work out coverage itself.
 
 Usage (from the top of the repository):
-    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py                 # serve over stdio
-    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py --show MC-500    # part + coverage as scheduled
+    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py                          # serve Brookfield over stdio
+    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py --org copperline-coffee  # serve Copperline
+    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py --org copperline-coffee --columns
     .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py --show MC-500 ^
         --arrivals "[{\\"qty\\": 120, \\"day\\": 5}, {\\"qty\\": 280, \\"day\\": 26}]"
 
 Add it to Claude Code (from the top of the repository):
     claude mcp add brookfield-supply -- .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py
 
-The server never calls Claude, so it needs no API key. In stdio mode, stdout
-carries the MCP protocol, so all logging goes to stderr.
+The server never calls Claude, so it needs no API key. In stdio mode, stdout carries the
+MCP protocol, so all logging goes to stderr.
 """
 
 import argparse
 import csv
 import json
+import re
 import sys
-from pathlib import Path
 from typing import Annotated, Any, TypedDict
 
 from mcp.server.mcpserver import MCPServer
@@ -46,10 +53,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp_types import ToolAnnotations
 from pydantic import Field
 
-HERE = Path(__file__).resolve().parent
-DEFAULT_DATA = HERE / "brookfield-bikes"
-DATA_DIR = DEFAULT_DATA  # set from --data in main()
-DATA_FILES = ("parts.csv", "orders.csv", "inbound.csv", "bill-of-materials.csv")
+from common import ORG_CSV_FILES, org_dir, org_name, resolve_org, set_org
 
 READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False,
                             idempotentHint=True, openWorldHint=False)
@@ -65,12 +69,101 @@ def log(message):
 
 
 # ---------------------------------------------------------------------------
-# Data
+# Working out the columns from each header row
 # ---------------------------------------------------------------------------
 
-def read_csv(name):
-    with open(DATA_DIR / name, newline="", encoding="utf-8-sig") as f:
-        return [{k.strip(): (v or "").strip() for k, v in row.items()} for row in csv.DictReader(f)]
+# For each file: each standard field, with patterns tried in order against the header names
+# (lower case, with spaces and punctuation turned into "_"). Fields are matched in the order
+# listed, and a column used by one field can't be used by another. Fields marked optional
+# may be missing.
+SCHEMAS = {
+    "parts.csv": [
+        ("part_id", [r"^part(_?(id|no|number|code))?$", r"^(sku|item_?id)$", r"part"]),
+        ("on_hand", [r"on_?hand", r"in_?stock", r"stock|inventory"]),
+        ("supplier", [r"^(supplier|vendor)(_?name)?$", r"supplier|vendor"]),
+        ("description", [r"desc", r"^name$"], "optional"),
+    ],
+    "bill-of-materials.csv": [
+        ("part_id", [r"^part(_?(id|no|number|code))?$", r"part"]),
+        ("parts_per_unit", [r"(^|_)per(_|$)", r"qty_?per|quantity_?per", r"usage|needed"]),
+        ("product", [r"^(model|product|item|machine|bike)(_?(name|id))?$",
+                     r"model|product|machine"]),
+    ],
+    "inbound.csv": [
+        ("po_number", [r"^po(_?(number|no|id))?$", r"purchase_?order", r"^po"]),
+        ("part_id", [r"^part(_?(id|no|number|code))?$", r"part"]),
+        ("supplier", [r"^(supplier|vendor)(_?name)?$", r"supplier|vendor"], "optional"),
+        ("day", [r"arriv.*day|day.*arriv", r"eta|due", r"day"]),
+        ("qty", [r"^(qty|quantity|units|amount|count)$", r"qty|quantity|units"]),
+    ],
+    "orders.csv": [
+        ("order_id", [r"^order(_?(id|no|number))?$", r"order"]),
+        ("contact_email", [r"e_?mail"]),
+        ("customer", [r"^(customer|client|account)(_?name)?$", r"customer|client"]),
+        ("late_penalty", [r"penalt", r"late"]),
+        ("ship_day", [r"ship.*day|day.*ship", r"due|deadline", r"day"]),
+        ("product", [r"^(model|product|item|machine|bike)(_?(name|id))?$",
+                     r"model|product|machine"]),
+        ("quantity", [r"^(qty|quantity|units|count|amount|bikes|machines)$",
+                      r"qty|quantity|units"]),
+    ],
+    "suppliers.csv": [
+        ("contact_email", [r"e_?mail"]),
+        ("supplier", [r"^(supplier|vendor|company)(_?name)?$", r"supplier|vendor"]),
+        ("contact_name", [r"contact_?name|^contact$", r"name"]),
+        ("part_id", [r"^part(_?(id|no|number|code))?$", r"part"], "optional"),
+    ],
+}
+
+
+class DataError(ToolError):
+    pass
+
+
+def normalize(header):
+    return re.sub(r"[^a-z0-9]+", "_", header.strip().lower()).strip("_")
+
+
+def map_columns(name, headers):
+    """{standard field: column name in this file}, worked out from the header row."""
+    free = list(headers)
+    mapping = {}
+    for field, patterns, *flags in SCHEMAS[name]:
+        for pattern in patterns:
+            hits = [h for h in free if re.search(pattern, normalize(h))]
+            if len(hits) > 1:
+                raise DataError(f"{name}: can't tell which column holds {field}: "
+                                f"{', '.join(hits)} all look like it.")
+            if hits:
+                mapping[field] = hits[0]
+                free.remove(hits[0])
+                break
+        else:
+            if not flags:
+                raise DataError(f"{name}: no column looks like {field}. "
+                                f"Columns: {', '.join(headers)}.")
+    return mapping
+
+
+def load_table(name):
+    """Rows of one CSV file in the company folder, with standard field names."""
+    with open(org_dir() / name, newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        headers = [h.strip() for h in (reader.fieldnames or [])]
+        rows = [{(k or "").strip(): (v or "").strip() for k, v in row.items()} for row in reader]
+    mapping = map_columns(name, headers)
+    return [{field: row.get(col, "") for field, col in mapping.items()} for row in rows]
+
+
+def column_report():
+    """Which column was found for each standard field, file by file."""
+    lines = [f"Company folder: {org_dir()}"]
+    for name in ORG_CSV_FILES:
+        with open(org_dir() / name, newline="", encoding="utf-8-sig") as f:
+            headers = [h.strip() for h in next(csv.reader(f), [])]
+        mapping = map_columns(name, headers)
+        lines.append(f"{name}: " + ", ".join(f"{k} = {v}" for k, v in mapping.items()))
+    return "\n".join(lines)
 
 
 def to_int(value, what):
@@ -80,9 +173,17 @@ def to_int(value, what):
         raise ToolError(f"Bad number in the data for {what}: {value!r}") from None
 
 
+def is_yes(value):
+    return str(value).strip().lower() in {"yes", "y", "true", "1"}
+
+
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+
 def find_part(part_id):
     key = (part_id or "").strip().upper()
-    parts = {p["part_id"].upper(): p for p in read_csv("parts.csv")}
+    parts = {p["part_id"].upper(): p for p in load_table("parts.csv")}
     if key not in parts:
         raise ToolError(f"Unknown part_id {part_id!r}. Known parts: {', '.join(sorted(parts))}.")
     return key, parts[key]
@@ -90,39 +191,40 @@ def find_part(part_id):
 
 def part_info(part_id):
     part_id, part = find_part(part_id)
-    models = [{"model": b["model"], "parts_per_bike": to_int(b["qty_per_bike"], "qty_per_bike")}
-              for b in read_csv("bill-of-materials.csv") if b["part_id"].upper() == part_id]
-    shipments = [{"po_number": r["po_number"], "supplier": r["supplier"],
+    products = [{"product": b["product"],
+                 "parts_per_unit": to_int(b["parts_per_unit"], f"{b['product']} parts per unit")}
+                for b in load_table("bill-of-materials.csv") if b["part_id"].upper() == part_id]
+    shipments = [{"po_number": r["po_number"], "supplier": r.get("supplier", part["supplier"]),
                   "qty": to_int(r["qty"], r["po_number"]),
-                  "day": to_int(r["arrives_in_days"], r["po_number"])}
-                 for r in read_csv("inbound.csv") if r["part_id"].upper() == part_id]
+                  "day": to_int(r["day"], r["po_number"])}
+                 for r in load_table("inbound.csv") if r["part_id"].upper() == part_id]
     return {
         "part_id": part_id,
-        "description": part["description"],
+        "description": part.get("description", ""),
         "supplier": part["supplier"],
-        "on_hand": to_int(part["on_hand"], f"{part_id} on_hand"),
+        "on_hand": to_int(part["on_hand"], f"{part_id} on hand"),
         "scheduled_shipments": sorted(shipments, key=lambda s: s["day"]),
-        "used_in": models,
+        "used_in": products,
     }
 
 
 def orders_for_part(part_id):
     """(part info, orders that need the part, earliest ship day first; ties by order_id)."""
     info = part_info(part_id)
-    per_bike = {m["model"]: m["parts_per_bike"] for m in info["used_in"]}
+    per_unit = {p["product"]: p["parts_per_unit"] for p in info["used_in"]}
     orders = []
-    for o in read_csv("orders.csv"):
-        if o["model"] not in per_bike:
+    for o in load_table("orders.csv"):
+        if o["product"] not in per_unit:
             continue
-        bikes = to_int(o["qty"], f"{o['order_id']} qty")
+        quantity = to_int(o["quantity"], f"{o['order_id']} quantity")
         orders.append({
             "order_id": o["order_id"],
             "customer": o["customer"],
-            "model": o["model"],
-            "bikes": bikes,
-            "units_needed": bikes * per_bike[o["model"]],
-            "ship_day": to_int(o["ship_in_days"], f"{o['order_id']} ship_in_days"),
-            "late_penalty": o["late_penalty"].strip().lower() == "yes",
+            "product": o["product"],
+            "quantity": quantity,
+            "units_needed": quantity * per_unit[o["product"]],
+            "ship_day": to_int(o["ship_day"], f"{o['order_id']} ship day"),
+            "late_penalty": is_yes(o["late_penalty"]),
         })
     orders.sort(key=lambda o: (o["ship_day"], o["order_id"]))
     return info, orders
@@ -193,9 +295,9 @@ def coverage(part_id, arrivals=None):
 
 def create_server():
     server = MCPServer(
-        name="brookfield-supply",
+        name=f"{org_name()}-supply",
         instructions=(
-            "Brookfield Bicycle Company supply data. Days are counted from today (day 0). "
+            f"Supply data for {org_name()}. Days are counted from today (day 0). "
             "Use get_part and get_orders_for_part to look things up, and check_coverage for "
             "any question about whether orders will be covered. Never work out coverage "
             "yourself, and report only numbers that came from these tools."
@@ -206,9 +308,9 @@ def create_server():
         return part_info(part_id)
 
     server.add_tool(get_part, name="get_part", annotations=READ_ONLY, description=(
-        "Look up one part by part_id (for example MC-500). Returns its description, supplier, "
-        "units on hand, scheduled shipments (po_number, qty, day: days from today), and the "
-        "bike models that use it, with parts per bike."
+        "Look up one part by part_id. Returns its description, supplier, units on hand, "
+        "scheduled shipments (po_number, qty, day: days from today), and the products that "
+        "use it, with parts per unit."
     ))
 
     def get_orders_for_part(part_id: str) -> dict[str, Any]:
@@ -218,8 +320,8 @@ def create_server():
     server.add_tool(get_orders_for_part, name="get_orders_for_part", annotations=READ_ONLY,
                     description=(
         "List the open customer orders that need a part, earliest ship day first. Each order "
-        "has order_id, customer, model, bikes, units_needed (bikes x parts per bike), ship_day "
-        "(days from today), and late_penalty (true or false)."
+        "has order_id, customer, product, quantity, units_needed (quantity x parts per unit), "
+        "ship_day (days from today), and late_penalty (true or false)."
     ))
 
     def check_coverage(part_id: str, arrivals: list[Arrival]) -> dict[str, Any]:
@@ -240,31 +342,36 @@ def create_server():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--data", metavar="FOLDER", help="data folder (default: week-05/brookfield-bikes)")
+    parser.add_argument("--org", "--data", metavar="FOLDER",
+                        help="company folder: a folder name in week-05 (e.g. copperline-coffee) "
+                             "or a path (default: week-05/brookfield-bikes)")
+    parser.add_argument("--columns", action="store_true",
+                        help="print which column was found for each field, then exit")
     parser.add_argument("--show", metavar="PART_ID",
                         help="print the part and its coverage, then exit (for testing)")
     parser.add_argument("--arrivals", metavar="JSON",
                         help='with --show: new arrivals, e.g. [{"qty": 120, "day": 5}]')
     args = parser.parse_args()
+    set_org(resolve_org(args.org))
 
-    global DATA_DIR
-    if args.data:
-        DATA_DIR = Path(args.data).resolve()
-    missing = [n for n in DATA_FILES if not (DATA_DIR / n).is_file()]
-    if missing:
-        sys.exit(f"{DATA_DIR} is missing: {', '.join(missing)}")
-
-    if args.show:
+    if args.columns or args.show:
         sys.stdout.reconfigure(encoding="utf-8")
         try:
-            arrivals = json.loads(args.arrivals) if args.arrivals else None
-            print(json.dumps(part_info(args.show), indent=2))
-            print(json.dumps(coverage(args.show, arrivals), indent=2))
+            if args.columns:
+                print(column_report())
+            if args.show:
+                arrivals = json.loads(args.arrivals) if args.arrivals else None
+                print(json.dumps(part_info(args.show), indent=2))
+                print(json.dumps(coverage(args.show, arrivals), indent=2))
         except (ToolError, json.JSONDecodeError) as exc:
             sys.exit(f"Error: {exc}")
         return
 
-    log(f"brookfield-supply MCP server ready (data: {DATA_DIR.name}).")
+    try:
+        column_report()  # fail at start-up, not mid-run, if a column can't be found
+    except ToolError as exc:
+        sys.exit(f"Error: {exc}")
+    log(f"{org_name()}-supply MCP server ready (data: {org_dir()}).")
     create_server().run()  # stdio
 
 

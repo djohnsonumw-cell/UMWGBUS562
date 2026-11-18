@@ -1,0 +1,39 @@
+Company: Copperline Coffee Machines (week-05\copperline-coffee)
+Coordinator: orchestrator
+Email: 04-pelham-maintenance-closure.eml
+From: o.brady@pelhamfittings.example
+Subject: Plant maintenance closure - PO-5540 not affected
+Specialist model: claude-sonnet-5
+Run folder: week-05\drafts\copperline-coffee\20261117-231458-orchestrator-04-pelham-maintenance-closure
+
+======================================================================
+Orchestrator (claude-sonnet-5; at most 10 tool calls)
+======================================================================
+    [orchestrator] tokens this call: 1,770 in, 499 out
+
+[orchestrator] CHOICE 1/10: finish {"summary": "Pelham Fittings notified us of a one-week plant maintenance closure starting in four weeks. They state PO-5540 (60 SW-3 steam wands) ships before the closure and will arrive on schedule, with no action needed from us. The email asks no questions and requests no reply, so no supplier reply or customer notice was drafted. Whether any customer orders are affected was not checked by the supply analyst, since the supplier indicates this order is unaffected and no other orders were flagged.", "needs_decision": false}
+[orchestrator] result of finish: Job finished.
+[orchestrator] done after 1 tool call(s).
+======================================================================
+SUMMARY (orchestrator)
+======================================================================
+Pelham Fittings notified us of a one-week plant maintenance closure starting in four weeks. They state PO-5540 (60 SW-3 steam wands) ships before the closure and will arrive on schedule, with no action needed from us. The email asks no questions and requests no reply, so no supplier reply or customer notice was drafted. Whether any customer orders are affected was not checked by the supply analyst, since the supplier indicates this order is unaffected and no other orders were flagged.
+
+Note: the supply analyst was not run, so the effect on customer orders was not checked against the data.
+
+Drafts saved (0) - nothing was sent:
+  - none
+
+Drafts marked for a person (0):
+  - none
+
+Decisions for a person (0):
+  - none
+
+Total tokens: 2,269 (1,770 input + 499 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               1         1,770            499
+Total                      1         1,770            499
+
+Drafts folder: week-05\drafts\copperline-coffee\20261117-231458-orchestrator-04-pelham-maintenance-closure

@@ -1,0 +1,63 @@
+{
+  "part_id": "BL-12",
+  "what_changed": "PO-5520 (200 BL-12 boilers, originally due day 7) will now ship either as 80 units on day 7 plus 120 units on day 21 (Option A), or as all 200 units on day 13 (Option B), per the supplier's offer.",
+  "orders_at_risk": [
+    {
+      "order_id": "O-2205",
+      "customer": "Tall Pines Coffee House",
+      "product": "Cafe One",
+      "quantity": 25,
+      "units_short": 5,
+      "ship_day": 17,
+      "ready_day": 21,
+      "days_late": 4,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-2203",
+      "customer": "Elm State University Dining",
+      "product": "Cafe One",
+      "quantity": 50,
+      "units_short": 40,
+      "ship_day": 12,
+      "ready_day": 13,
+      "days_late": 1,
+      "late_penalty": true
+    }
+  ],
+  "options": [
+    {
+      "name": "Option A: 80 on day 7, 120 on day 21",
+      "order_ids": [
+        "O-2205"
+      ],
+      "impact": [
+        {
+          "order_id": "O-2205",
+          "units_short": 5,
+          "days_late": 4
+        }
+      ]
+    },
+    {
+      "name": "Option B: 200 on day 13",
+      "order_ids": [
+        "O-2203"
+      ],
+      "impact": [
+        {
+          "order_id": "O-2203",
+          "units_short": 40,
+          "days_late": 1
+        }
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose between Option A (puts order O-2205, 4 days late, at risk) and Option B (puts order O-2203, 1 day late, at risk) \u2014 both at-risk orders carry a late penalty, so weigh which delay/penalty is more acceptable.",
+    "Respond to Marlow Metalworks within three business days, or Option B will be applied by default."
+  ],
+  "supplier_questions": [
+    "Which shipping option (A or B) would Copperline like for PO-5520?"
+  ]
+}

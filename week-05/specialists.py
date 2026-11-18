@@ -1,7 +1,9 @@
 """The four specialists both coordinators share, and the review step around the writers.
 
 Specialists (all on claude-sonnet-5; each reads its system prompt from
-brookfield-bikes/prompts/ every time it runs, so prompt edits take effect right away):
+<company folder>/prompts/ every time it runs, so prompt edits take effect right away).
+The company folder is set with --org (default: week-05/brookfield-bikes); its CSV files are
+read through supply_mcp_server.load_table, which works out the columns from each header:
 
 - run_analyst(email): the supply analyst, an agent with the tools of
   supply_mcp_server.py. It may make at most 10 tool calls in total; after the 10th it
@@ -31,7 +33,7 @@ import asyncio
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import anthropic
@@ -39,9 +41,10 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from common import (DRAFTS_DIR, HERE, REPO, RULE, STOP_REASONS, Tee, Usage, ask_claude,
+                    company_name, org_dir, org_name, resolve_org, set_org,
                     email_block, load_api_key, parse_email, read_prompt, reply_subject,
                     response_text, single_turn, preview)
-from supply_mcp_server import read_csv
+from supply_mcp_server import coverage, load_table
 
 SPECIALIST_MODEL = "claude-sonnet-5"
 SERVER_SCRIPT = HERE / "supply_mcp_server.py"
@@ -53,6 +56,8 @@ NO_REPLY = "NO REPLY NEEDED"
 BRIEF_FIELDS = ["part_id", "what_changed", "orders_at_risk", "options",
                 "decisions_for_a_person", "supplier_questions"]
 HANDOFF_CHARS = 2500          # how much of each handoff's contents to print
+SLACK_LOOKAHEAD = 14          # how many more days of delay the slack check tries
+SLACK_TIGHT_DAYS = 3          # at or below this, the supplier is asked to hold the new date
 
 ANALYST, SUPPLIER_WRITER, CUSTOMER_WRITER, REVIEWER = (
     "supply analyst", "supplier writer", "customer writer", "reviewer")
@@ -98,7 +103,19 @@ def _one_call(client, usage, agent, prompt_name, user_text):
     _print_tokens(agent, response)
     if response.stop_reason != "end_turn":
         raise RuntimeError(f"{agent} {STOP_REASONS.get(response.stop_reason, response.stop_reason)}.")
-    return response_text(response)
+    text = response_text(response)
+    if agent in (SUPPLIER_WRITER, CUSTOMER_WRITER):
+        text = strip_subject(text)
+    return text
+
+
+def strip_subject(draft):
+    """Drop a "Subject: ..." line a writer put at the top of the body (the saved draft
+    already has its own Subject header)."""
+    lines = draft.strip().splitlines()
+    if lines and re.match(r"\**\s*subject\s*:", lines[0], re.IGNORECASE):
+        lines = lines[1:]
+    return "\n".join(lines).strip()
 
 
 # ---------------------------------------------------------------------------
@@ -115,10 +132,59 @@ def parse_json_object(text):
         raise BriefError(f"The brief isn't valid JSON: {exc}.") from None
 
 
+def flatten_orders(value):
+    """orders_at_risk as a list, even when the analyst grouped it (by option, or keyed by
+    order ID). Duplicates of the same order are dropped. Other values pass through."""
+    if not isinstance(value, dict):
+        return value
+    found = []
+
+    def collect(v):
+        if isinstance(v, dict) and "order_id" in v:
+            found.append(v)
+        elif isinstance(v, dict):
+            for inner in v.values():
+                collect(inner)
+        elif isinstance(v, list):
+            for inner in v:
+                collect(inner)
+
+    collect(value)
+    seen, orders = set(), []
+    for o in found:
+        if o["order_id"] not in seen:
+            seen.add(o["order_id"])
+            orders.append(o)
+    return orders
+
+
+def normalize_option(option):
+    """Accept common variations in how the analyst writes an option: the order list under
+    another key (orders_at_risk, order_ids_at_risk, ...), orders as objects instead of IDs,
+    or the name under "option" or "label". Changes option in place."""
+    if not isinstance(option, dict):
+        return
+    if "name" not in option:
+        for key in ("option", "label", "option_name", "id"):
+            if isinstance(option.get(key), str):
+                option["name"] = option.pop(key)
+                break
+    if not isinstance(option.get("order_ids"), list):
+        key = next((k for k, v in option.items() if "order" in k.lower() and isinstance(v, list)),
+                   None)
+        if key is not None:
+            option["order_ids"] = option.pop(key)
+    if isinstance(option.get("order_ids"), list):
+        option["order_ids"] = [o.get("order_id") if isinstance(o, dict) else o
+                               for o in option["order_ids"]]
+
+
 def check_brief(text, coverage_results):
     """Parse the brief and check it against the check_coverage results. Returns the brief,
     with each order at risk replaced by the tool's own record of that order."""
     brief = parse_json_object(text)
+    if isinstance(brief, dict):
+        brief["orders_at_risk"] = flatten_orders(brief.get("orders_at_risk"))
     if not isinstance(brief, dict) or sorted(brief) != sorted(BRIEF_FIELDS):
         raise BriefError(f"The brief must have exactly these fields: {', '.join(BRIEF_FIELDS)}.")
     for key in ("part_id", "what_changed"):
@@ -146,18 +212,43 @@ def check_brief(text, coverage_results):
         if match is None:
             raise BriefError(f"orders_at_risk entry {oid} doesn't match any check_coverage result "
                              "(order_id, units_short, ship_day, and ready_day must come from the tool).")
-        checked.append({k: match[k] for k in ("order_id", "customer", "model", "bikes",
+        checked.append({k: match[k] for k in ("order_id", "customer", "product", "quantity",
                                               "units_short", "ship_day", "ready_day",
                                               "days_late", "late_penalty")})
     brief["orders_at_risk"] = checked
 
     for option in brief["options"]:
+        normalize_option(option)
         if not isinstance(option, dict) or not isinstance(option.get("order_ids"), list):
-            raise BriefError("Each option must be an object with a name and an order_ids list.")
+            raise BriefError('Each option must look like {"name": "Option A", "order_ids": '
+                             '["O-1234"]}, with an empty order_ids list if it puts no order at risk.')
         for oid in option["order_ids"]:
             if str(oid).strip() not in at_risk:
                 raise BriefError(f"Option {option.get('name')!r} lists {oid}, but no check_coverage "
                                  "result shows that order at risk.")
+        # Each option's impact comes from the check_coverage result for that option: the
+        # latest one whose orders at risk are exactly the option's order_ids.
+        ids = {str(i).strip() for i in option["order_ids"]}
+        result = next((r for r in reversed(coverage_results)
+                       if set(r["orders_at_risk"]) == ids), None)
+        if result is None:
+            listed = ", ".join(sorted(ids)) or "none"
+            raise BriefError(f"Option {option.get('name')!r}: its order_ids ({listed}) don't match "
+                             "the orders at risk in any check_coverage result. Check each option "
+                             "separately and copy its orders at risk.")
+        option["impact"] = [{k: o[k] for k in ("order_id", "units_short", "days_late")}
+                            for o in result["orders"] if not o["covered"]]
+        # Every order at risk under some option belongs in orders_at_risk too (customer
+        # notices and the late-penalty check use that list). Add any the analyst left out,
+        # straight from the tool's record for this option.
+        listed = {o["order_id"] for o in checked}
+        for o in result["orders"]:
+            if not o["covered"] and o["order_id"] not in listed:
+                checked.append({k: o[k] for k in ("order_id", "customer", "product", "quantity",
+                                                  "units_short", "ship_day", "ready_day",
+                                                  "days_late", "late_penalty")})
+                print(f"[code check] added {o['order_id']} to orders_at_risk (at risk under "
+                      f"{option.get('name')})")
 
     if not brief["options"] and coverage_results:
         expected = set(coverage_results[-1]["orders_at_risk"])
@@ -172,7 +263,7 @@ def check_brief(text, coverage_results):
     for option in brief["options"]:
         at_risk_ids |= {str(i).strip() for i in option["order_ids"]}
     stray = set()
-    for row in read_csv("orders.csv"):
+    for row in load_table("orders.csv"):
         if row["order_id"] in at_risk_ids:
             continue
         for key in ("what_changed", "decisions_for_a_person", "supplier_questions"):
@@ -185,6 +276,32 @@ def check_brief(text, coverage_results):
         raise BriefError("These customers' orders are not at risk, so don't mention them: "
                          + "; ".join(sorted(stray)) + ".")
     return brief
+
+
+def find_slack(part_id, arrivals):
+    """How many more days the new schedule can slip before an order is late. Uses the
+    same coverage() code as the check_coverage tool, delaying every arrival by 1, 2, ...
+    up to SLACK_LOOKAHEAD days."""
+    for extra in range(1, SLACK_LOOKAHEAD + 1):
+        shifted = [{"qty": a["qty"], "day": a["day"] + extra} for a in arrivals]
+        late = [o for o in coverage(part_id, shifted)["orders"] if not o["covered"]]
+        if late:
+            o = late[0]
+            days = extra - 1
+            penalty = ", late penalty" if o["late_penalty"] else ""
+            return {
+                "part_id": part_id,
+                "extra_days": days,
+                "first_order_affected": {k: o[k] for k in ("order_id", "customer",
+                                                          "late_penalty", "units_short")},
+                "note": (f"The new {part_id} schedule can slip {days} more "
+                         f"day{'' if days == 1 else 's'} with no order late. At {extra} more "
+                         f"day{'' if extra == 1 else 's'}, {o['order_id']} ({o['customer']}"
+                         f"{penalty}) would be {o['units_short']} units short."),
+            }
+    return {"part_id": part_id, "extra_days": None, "first_order_affected": None,
+            "note": (f"No order would be late even if the new {part_id} schedule slipped "
+                     f"{SLACK_LOOKAHEAD} more days.")}
 
 
 async def call_mcp_tool(session, name, args):
@@ -208,7 +325,8 @@ async def run_analyst(email, *, client=None, usage=None):
     system = read_prompt("analyst")
     coverage_results = []
     calls = 0
-    server = StdioServerParameters(command=sys.executable, args=[str(SERVER_SCRIPT)],
+    server = StdioServerParameters(command=sys.executable,
+                                   args=[str(SERVER_SCRIPT), "--org", str(org_dir())],
                                    cwd=str(REPO))
     print(f"{RULE}\nSupply analyst ({SPECIALIST_MODEL}; MCP server: {SERVER_SCRIPT.name})\n{RULE}")
     with open(SERVER_LOG, "a", encoding="utf-8") as errlog:
@@ -280,6 +398,16 @@ async def run_analyst(email, *, client=None, usage=None):
                             f"{max(0, ANALYST_MAX_TOOL_CALLS - calls)} tool calls left) and "
                             "finish with only the corrected JSON brief.")})
     print(f"[{ANALYST}] finished after {calls} tool call(s).")
+    # No order at risk under a new schedule: check, in code, how much more delay it can take.
+    # Skipped when the email didn't change the schedule (the analyst checked the same one).
+    if not brief["orders_at_risk"] and not brief["options"] and coverage_results:
+        last = coverage_results[-1]
+        key = lambda arrivals: sorted((a["qty"], a["day"]) for a in arrivals)
+        if key(last["arrivals_used"]) != key(last["replaced_schedule"] or []):
+            brief["slack"] = find_slack(brief["part_id"], last["arrivals_used"])
+            print(f"[slack check] {brief['slack']['note']}")
+        else:
+            print("[slack check] skipped: the email didn't change the schedule.")
     return brief
 
 
@@ -290,7 +418,7 @@ async def run_analyst(email, *, client=None, usage=None):
 def _customer_terms():
     """Customer names, order numbers, and contact addresses, longest first."""
     terms = {}
-    for row in read_csv("orders.csv"):
+    for row in load_table("orders.csv"):
         terms[row["customer"]] = "a customer"
         terms[row["order_id"]] = "an order"
         terms[row["contact_email"]] = "a customer contact"
@@ -311,23 +439,52 @@ def remove_customers(value):
     return value
 
 
+def day_dates(texts):
+    """{"day N": calendar date} for every "day N" in texts, counting today as day 0, so the
+    supplier writer can give dates instead of our internal day numbers."""
+    today = date.today()
+    days = sorted({int(n) for t in texts for n in re.findall(r"\bday (\d+)\b", str(t))})
+    table = {"today (day 0)": f"{today:%A, %B} {today.day}, {today.year}"}
+    for n in days:
+        d = today + timedelta(days=n)
+        table[f"day {n}"] = f"{d:%A, %B} {d.day}, {d.year}"
+    return table
+
+
+def impact_totals(orders):
+    """Totals for a group of orders at risk: no customers, no order numbers."""
+    late = [o["days_late"] for o in orders if o["days_late"] is not None]
+    return {"orders_delayed": len(orders),
+            "units_short": sum(o["units_short"] for o in orders),
+            "days_late_range": [min(late), max(late)] if late else None}
+
+
 def supplier_brief(brief):
-    """What the supplier writer may see: totals, not orders, with customers removed."""
+    """What the supplier writer may see: totals, not orders, with customers removed, and
+    a table turning each "day N" into a date. When the supplier offers options, only one
+    of them will happen, so the impact is given per option and never added up."""
     if brief is None:
         return {"note": "No supply analysis was run for this email."}
-    risk = brief["orders_at_risk"]
-    late = [o["days_late"] for o in risk if o["days_late"] is not None]
-    return remove_customers({
-        "part_id": brief["part_id"],
-        "what_changed": brief["what_changed"],
-        "orders_delayed": len(risk),
-        "total_units_short": sum(o["units_short"] for o in risk),
-        "days_late_range": [min(late), max(late)] if late else None,
-        "options": [{"name": o.get("name"), "orders_delayed": len(o["order_ids"])}
-                    for o in brief["options"]],
+    texts = [brief["what_changed"], *brief["decisions_for_a_person"],
+             *brief["supplier_questions"], *[o.get("name") for o in brief["options"]]]
+    facts = {"part_id": brief["part_id"], "what_changed": brief["what_changed"]}
+    if brief["options"]:
+        facts["impact_by_option"] = [{"option": o.get("name"), **impact_totals(o["impact"])}
+                                     for o in brief["options"]]
+        facts["impact_note"] = ("Only one option will happen. Give the impact of each option "
+                                "separately; never add the options together.")
+    else:
+        facts["impact"] = impact_totals(brief["orders_at_risk"])
+    slack = brief.get("slack")
+    if slack and slack["extra_days"] is not None and slack["extra_days"] <= SLACK_TIGHT_DAYS:
+        # Only the fact that the date is tight: never our margin, never the order.
+        facts["new_date_is_tight"] = True
+    facts.update({
         "decisions_for_a_person": brief["decisions_for_a_person"],
         "supplier_questions": brief["supplier_questions"],
+        "dates": day_dates(texts),
     })
+    return remove_customers(facts)
 
 
 def supplier_writer_input(email, brief):
@@ -354,8 +511,8 @@ def customer_facts(order):
     return {
         "customer": order["customer"],
         "order_id": order["order_id"],
-        "model": order["model"],
-        "quantity": order["bikes"],
+        "product": order["product"],
+        "quantity": order["quantity"],
         "planned_ship_in_days": order["ship_day"],
         "days_later_than_planned": (order["days_late"] if order["days_late"] is not None
                                     else "not yet known"),
@@ -388,10 +545,17 @@ def review(draft, facts, recipient, *, client=None, usage=None):
     client, usage = _ctx(client, usage)
     text = _one_call(client, usage, REVIEWER, "reviewer", (
         f"Recipient: {recipient}\n\n<facts>\n{facts}\n</facts>\n\n<draft>\n{draft}\n</draft>"))
-    first = next((line.strip().strip("*#").strip().upper()
-                  for line in text.splitlines() if line.strip()), "")
-    verdict = "APPROVE" if first.startswith("APPROVE") else "REVISE"  # unclear counts as REVISE
-    return {"verdict": verdict, "reasons": text}
+    return {"verdict": parse_verdict(text), "reasons": text}
+
+
+def parse_verdict(text):
+    """APPROVE only if the first line is exactly APPROVE and no line says REVISE. Anything
+    else (including "APPROVE is not warranted. REVISE ...") counts as REVISE."""
+    lines = [line.strip().strip("*#:.!").strip().upper()
+             for line in text.splitlines() if line.strip()]
+    if any(line.startswith("REVISE") for line in lines):
+        return "REVISE"
+    return "APPROVE" if lines and lines[0] == "APPROVE" else "REVISE"
 
 
 # ---------------------------------------------------------------------------
@@ -404,13 +568,13 @@ def find_names(text, names):
 
 
 def customer_names():
-    return {row["customer"] for row in read_csv("orders.csv")}
+    return {row["customer"] for row in load_table("orders.csv")}
 
 
 def supplier_names():
     """Supplier names, their short names (Northgate, Keystone, ...), and contact names."""
     names = set()
-    for s in read_csv("suppliers.csv"):
+    for s in load_table("suppliers.csv"):
         names |= {s["supplier"], s["supplier"].split()[0], s["contact_name"]}
     return names
 
@@ -465,13 +629,16 @@ def draft_summary(recipient, facts, outcome, to):
     the checks, so whoever reads it (the orchestrator, a person) can't be misled."""
     review_part = (f"reviewer: {outcome['verdict']} after {outcome['revisions']} revision(s)")
     if recipient == "supplier":
-        if "orders_delayed" in facts:
-            days = facts["days_late_range"]
-            impact = (f"{facts['orders_delayed']} order(s) delayed, "
-                      f"{facts['total_units_short']} units short"
-                      + (f", {days[0]}-{days[1]} days late" if days else ""))
-            if facts["options"]:
-                impact += f"; {len(facts['options'])} supplier option(s) compared"
+        def describe(t):
+            days = t["days_late_range"]
+            span = "" if not days else (f", {days[0]} day{'' if days[0] == 1 else 's'} late"
+                                        if days[0] == days[1] else f", {days[0]}-{days[1]} days late")
+            return f"{t['orders_delayed']} order(s) delayed, {t['units_short']} units short{span}"
+        if "impact_by_option" in facts:
+            impact = "per option: " + "; ".join(f"{t['option']}: {describe(t)}"
+                                               for t in facts["impact_by_option"])
+        elif "impact" in facts:
+            impact = describe(facts["impact"])
         else:
             impact = "no supply analysis"
         check = ("names a customer: " + ", ".join(outcome["leaks"]) if outcome["leaks"]
@@ -479,11 +646,18 @@ def draft_summary(recipient, facts, outcome, to):
         return (f"Reply to {to}. The writer was given totals only ({impact}), with no customer "
                 f"names or order numbers. Code check: {check}; {review_part}.")
     days = facts["days_later_than_planned"]
+    days = f"{days} day{'' if days == 1 else 's'}" if isinstance(days, int) else f"{days} days"
     check = ("names a supplier: " + ", ".join(outcome["leaks"]) if outcome["leaks"]
              else "names no supplier")
     return (f"Notice to {facts['customer']} about order {facts['order_id']} "
-            f"({facts['quantity']} {facts['model']}), {days} days later than planned. The "
+            f"({facts['quantity']} {facts['product']}), {days} later than planned. The "
             f"writer was given only this order's facts. Code check: {check}; {review_part}.")
+
+
+def print_final(title, outcome):
+    """After a review step: the final draft, once, with whether it's marked for a person."""
+    print(f"\n{title}\n{outcome['draft']}\n"
+          f"Marked for a person: {'yes' if outcome['needs_person'] else 'no'}\n")
 
 
 # ---------------------------------------------------------------------------
@@ -502,9 +676,11 @@ class TeamRun:
         self.summary = None
         self.needs_decision = None
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        self.run_dir = DRAFTS_DIR / f"{stamp}-{coordinator}-{email['path'].stem}"
+        # Each company's drafts go in their own folder: week-05/drafts/<company folder>/<run>.
+        self.run_dir = DRAFTS_DIR / org_name() / f"{stamp}-{coordinator}-{email['path'].stem}"
         self.run_dir.mkdir(parents=True, exist_ok=True)
-        self.orders = {o["order_id"]: o for o in read_csv("orders.csv")}
+        self.orders = {o["order_id"]: o for o in load_table("orders.csv")}
+        self.company = company_name()
 
     async def analyst(self):
         if self.brief is None:
@@ -513,7 +689,8 @@ class TeamRun:
             self.brief = await run_analyst(self.email, client=self.client, usage=self.usage)
             (self.run_dir / "brief.json").write_text(json.dumps(self.brief, indent=2),
                                                      encoding="utf-8")
-            handoff(ANALYST, self.coordinator, "brief", self.brief)
+            handoff(ANALYST, self.coordinator, "brief (in full below)")
+            print(f"ANALYST'S BRIEF\n{json.dumps(self.brief, indent=2)}\nEND OF BRIEF\n")
         return self.brief
 
     def save_draft(self, filename, header, outcome, recipient, summary):
@@ -525,7 +702,7 @@ class TeamRun:
             "", "DRAFT", outcome["draft"], "", "REVIEW NOTES", *outcome["notes"]]) + "\n"
         (self.run_dir / filename).write_text(body, encoding="utf-8")
         record = {"file": filename, "recipient": recipient, "status": status,
-                  "summary": summary,
+                  "summary": summary, "draft_text": outcome["draft"],
                   "needs_person": outcome["needs_person"], "reasons": outcome["reasons"],
                   "saved_to": str((self.run_dir / filename).relative_to(REPO))}
         self.drafts.append(record)
@@ -543,6 +720,7 @@ class TeamRun:
                                                   feedback=fb, client=self.client, usage=self.usage),
             supplier_writer_input(self.email, self.brief), "supplier", "the supplier", penalty,
             coordinator=self.coordinator, client=self.client, usage=self.usage)
+        print_final("FINAL DRAFT TO SUPPLIER", outcome)
         if outcome["draft"] == NO_REPLY:
             self.drafts.append({"file": None, "recipient": "supplier", "status": "no reply needed",
                                 "needs_person": False, "reasons": []})
@@ -550,7 +728,7 @@ class TeamRun:
         return self.save_draft("supplier-reply.txt", [
             f"To: {self.email['from_name']} <{self.email['sender']}>",
             f"Subject: {reply_subject(self.email['subject'])}",
-            "From: Purchasing, Brookfield Bicycle Company",
+            f"From: Purchasing, {self.company}",
             f"In reply to: {self.email['path'].name}"], outcome, "supplier",
             draft_summary("supplier", supplier_brief(self.brief), outcome,
                           self.email["from_name"] or self.email["sender"]))
@@ -582,11 +760,12 @@ class TeamRun:
             json.dumps(customer_facts(order), indent=2), "customer", order_id,
             order["late_penalty"], coordinator=self.coordinator, client=self.client,
             usage=self.usage, extra_reasons=extra)
+        print_final(f"FINAL DRAFT TO CUSTOMER {order_id}", outcome)
         row = self.orders[order_id]
         return self.save_draft(f"notice-{order_id}.txt", [
             f"To: {row['customer']} <{row['contact_email']}>",
-            f"Subject: Update on your Brookfield order {order_id}",
-            "From: Customer Service, Brookfield Bicycle Company"], outcome, "customer",
+            f"Subject: Update on your {self.company} order {order_id}",
+            f"From: Customer Service, {self.company}"], outcome, "customer",
             draft_summary("customer", customer_facts(order), outcome, row["customer"]))
 
     def result_lines(self):
@@ -602,6 +781,9 @@ class TeamRun:
         lines += [f"  - {d['file']}: {'; '.join(d['reasons'])}" for d in marked] or ["  - none"]
         lines += ["", f"Decisions for a person ({len(decisions)}):"]
         lines += [f"  - {d}" for d in decisions] or ["  - none"]
+        slack = (self.brief or {}).get("slack")
+        if slack:
+            lines += ["", f"Watch: {slack['note']}"]
         lines += ["", f"Total tokens: {tin + tout:,} ({tin:,} input + {tout:,} output)",
                   "", self.usage.report()]
         return lines
@@ -620,14 +802,18 @@ class TeamRun:
 # ---------------------------------------------------------------------------
 
 def run_coordinator(name, description, coordinate):
-    """Parse --email/--save, run coordinate(team) for one email, print the results."""
+    """Parse --org/--email/--save, run coordinate(team) for one email, print the results."""
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--org", metavar="FOLDER",
+                        help="company folder: a folder name in week-05 (e.g. copperline-coffee) "
+                             "or a path (default: week-05/brookfield-bikes)")
     parser.add_argument("--email", metavar="PATH", required=True,
                         help="one supplier email (.eml), e.g. week-05/brookfield-bikes/"
                              "supplier-emails/01-northgate-controller-delay.eml")
     parser.add_argument("--save", metavar="FILE",
                         help="also write everything printed to FILE (UTF-8), e.g. week-05/runs/...")
     args = parser.parse_args()
+    set_org(resolve_org(args.org))
     if not Path(args.email).is_file():
         sys.exit(f"Email file not found: {args.email}")
 
@@ -642,7 +828,8 @@ def run_coordinator(name, description, coordinate):
     try:
         email = parse_email(args.email)
         team = TeamRun(anthropic.Anthropic(api_key=load_api_key()), email, name)
-        print(f"Coordinator: {name}\nEmail: {email['path'].name}\nFrom: {email['sender']}\n"
+        print(f"Company: {team.company} ({org_dir().relative_to(REPO)})\n"
+              f"Coordinator: {name}\nEmail: {email['path'].name}\nFrom: {email['sender']}\n"
               f"Subject: {email['subject']}\nSpecialist model: {SPECIALIST_MODEL}\n"
               f"Run folder: {team.run_dir.relative_to(REPO)}\n")
         asyncio.run(coordinate(team))

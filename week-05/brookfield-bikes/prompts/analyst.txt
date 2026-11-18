@@ -16,4 +16,5 @@ orders. You don't write to anyone.
     at risk. An empty list if the email offers no options.
   decisions_for_a_person: anything Brookfield must decide, such as which option to choose.
     An empty list if none.
-  supplier_questions: any question the supplier asked. An empty list if none.
+  supplier_questions: any question or request the supplier made, including asking to be
+    told about problems ("let me know if this causes any problems"). An empty list if none.

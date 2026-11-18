@@ -1,0 +1,412 @@
+Company: Copperline Coffee Machines (week-05\copperline-coffee)
+Coordinator: pipeline
+Email: 01-danforth-pump-delay.eml
+From: d.kessler@danforthpump.example
+Subject: PO-5512 - PU-20 pumps - partial shipment
+Specialist model: claude-sonnet-5
+Run folder: week-05\drafts\copperline-coffee\20261117-223912-pipeline-01-danforth-pump-delay
+
+======================================================================
+STEP 1 of 3: supply analyst
+======================================================================
+
+>>> HANDOFF: pipeline -> supply analyst: analyze 01-danforth-pump-delay.eml
+    <email>
+    From: Diane Kessler <d.kessler@danforthpump.example>
+    Subject: PO-5512 - PU-20 pumps - partial shipment
+    
+    Hello,
+    
+    I'm writing about PO-5512 for 200 PU-20 vibration pumps. A test rig on our
+    assembly line failed inspection, and we can't release the full order on the
+    scheduled date.
+    
+    We can deliver 40 of the 200 pumps on the scheduled date. The other 160 will
+    follow 15 days later.
+    
+    We're sorry for the disruption. To help us plan, could you send us a list of
+    the customer orders these pumps are for, with each customer's name and
+    quantity? We'll do our best to keep the delay as short as we can.
+    
+    Diane Kessler
+    Key Accounts, Danforth Pump Works
+    </email>
+======================================================================
+Supply analyst (claude-sonnet-5; MCP server: supply_mcp_server.py)
+======================================================================
+    [supply analyst] tokens this call: 1,852 in, 106 out
+[supply analyst] tool call 1/10: get_part {"part_id": "PU-20"}
+  result: {
+  "part_id": "PU-20",
+  "description": "Vibration pump",
+  "supplier": "Danforth Pump Works",
+  "on_hand": 50,
+  "scheduled_shipments": [
+    {
+      "po_number": "PO-5512",
+      "supplier": "Danforth Pump Works",
+      "qty": 200,
+      "day": 4
+    }
+  ],
+  "used_in": [
+    {
+      "product": "...
+
+[supply analyst] tool call 2/10: get_orders_for_part {"part_id": "PU-20"}
+  result: {
+  "part_id": "PU-20",
+  "orders": [
+    {
+      "order_id": "O-2201",
+      "customer": "Morning Ritual Cafe",
+      "product": "Cafe One",
+      "quantity": 20,
+      "units_needed": 20,
+      "ship_day": 6,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-2202",
+      "customer": "H...
+
+    [supply analyst] tokens this call: 2,893 in, 108 out
+[supply analyst] tool call 3/10: check_coverage {"part_id": "PU-20", "arrivals": [{"qty": 40, "day": 4}, {"qty": 160, "day": 19}]}
+  result: {
+  "part_id": "PU-20",
+  "on_hand": 50,
+  "arrivals_used": [
+    {
+      "qty": 40,
+      "day": 4
+    },
+    {
+      "qty": 160,
+      "day": 19
+    }
+  ],
+  "replaced_schedule": [
+    {
+      "qty": 200,
+      "day": 4
+    }
+  ],
+  "total_units_needed": 184,
+  "total_units_available": 250,
+  "ord...
+
+    [supply analyst] tokens this call: 4,085 in, 573 out
+[supply analyst] finished after 3 tool call(s).
+
+>>> HANDOFF: supply analyst -> pipeline: brief (in full below)
+ANALYST'S BRIEF
+{
+  "part_id": "PU-20",
+  "what_changed": "Instead of the full 200-unit PO-5512 arriving on day 4, only 40 units will arrive on day 4 and the remaining 160 units will arrive on day 19.",
+  "orders_at_risk": [
+    {
+      "order_id": "O-2203",
+      "customer": "Elm State University Dining",
+      "product": "Cafe One",
+      "quantity": 50,
+      "units_short": 10,
+      "ship_day": 12,
+      "ready_day": 19,
+      "days_late": 7,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-2204",
+      "customer": "Kettle & Crumb Bakery",
+      "product": "Cafe Duo",
+      "quantity": 10,
+      "units_short": 20,
+      "ship_day": 15,
+      "ready_day": 19,
+      "days_late": 4,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-2205",
+      "customer": "Tall Pines Coffee House",
+      "product": "Cafe One",
+      "quantity": 25,
+      "units_short": 25,
+      "ship_day": 17,
+      "ready_day": 19,
+      "days_late": 2,
+      "late_penalty": true
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide whether to expedite or source pumps elsewhere for O-2203 and O-2205, which carry late penalties and will ship 7 and 2 days late respectively under the new schedule.",
+    "Decide how to handle O-2204, which will ship 4 days late (no penalty, but delay to customer).",
+    "Decide whether/how to respond to Danforth's request for a customer order breakdown (names/quantities), given this may reveal confidential customer data."
+  ],
+  "supplier_questions": [
+    "Danforth asked for a list of the customer orders these pumps are for, including each customer's name and quantity."
+  ]
+}
+END OF BRIEF
+
+======================================================================
+STEP 2 of 3: customer notices
+======================================================================
+======================================================================
+Customer notice for O-2203
+======================================================================
+
+>>> HANDOFF: pipeline -> customer writer: write the customer draft for O-2203
+    {
+      "customer": "Elm State University Dining",
+      "order_id": "O-2203",
+      "product": "Cafe One",
+      "quantity": 50,
+      "planned_ship_in_days": 12,
+      "days_later_than_planned": 7
+    }
+    [customer writer] tokens this call: 367 in, 174 out
+
+>>> HANDOFF: customer writer -> reviewer: draft 1 for O-2203
+    Dear Elm State University Dining Team,
+    
+    We're writing to let you know about an update to your order, O-2203, for 50 units of the Cafe One.
+    
+    Your order is now expected to ship 7 days later than originally planned, due to a delay in a part from one of our suppliers.
+    
+    We apologize for this delay and any inconvenience it may cause as you plan for your dining services.
+    
+    If you have any questions about your order, please don't hesitate to reach out.
+    
+    Thank you for your patience and understanding.
+    
+    Customer Service, Copperline Coffee Machines
+    [reviewer] tokens this call: 682 in, 7 out
+
+>>> HANDOFF: reviewer -> pipeline: APPROVE after 0 revision(s)
+    APPROVE
+[code check] O-2203: names check passed
+
+FINAL DRAFT TO CUSTOMER O-2203
+Dear Elm State University Dining Team,
+
+We're writing to let you know about an update to your order, O-2203, for 50 units of the Cafe One.
+
+Your order is now expected to ship 7 days later than originally planned, due to a delay in a part from one of our suppliers.
+
+We apologize for this delay and any inconvenience it may cause as you plan for your dining services.
+
+If you have any questions about your order, please don't hesitate to reach out.
+
+Thank you for your patience and understanding.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: yes
+
+======================================================================
+Customer notice for O-2204
+======================================================================
+
+>>> HANDOFF: pipeline -> customer writer: write the customer draft for O-2204
+    {
+      "customer": "Kettle & Crumb Bakery",
+      "order_id": "O-2204",
+      "product": "Cafe Duo",
+      "quantity": 10,
+      "planned_ship_in_days": 15,
+      "days_later_than_planned": 4
+    }
+    [customer writer] tokens this call: 374 in, 148 out
+
+>>> HANDOFF: customer writer -> reviewer: draft 1 for O-2204
+    Dear Kettle & Crumb Bakery,
+    
+    We're writing to let you know about an update to your order, O-2204, for 10 Cafe Duo units. The order is now expected to ship 4 days later than originally planned.
+    
+    We apologize for this delay. It is due to a delay in a part from one of our suppliers.
+    
+    We appreciate your patience and will keep you informed if there is any further change to this timeline.
+    
+    Customer Service, Copperline Coffee Machines
+    [reviewer] tokens this call: 663 in, 7 out
+
+>>> HANDOFF: reviewer -> pipeline: APPROVE after 0 revision(s)
+    APPROVE
+[code check] O-2204: names check passed
+
+FINAL DRAFT TO CUSTOMER O-2204
+Dear Kettle & Crumb Bakery,
+
+We're writing to let you know about an update to your order, O-2204, for 10 Cafe Duo units. The order is now expected to ship 4 days later than originally planned.
+
+We apologize for this delay. It is due to a delay in a part from one of our suppliers.
+
+We appreciate your patience and will keep you informed if there is any further change to this timeline.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: no
+
+======================================================================
+Customer notice for O-2205
+======================================================================
+
+>>> HANDOFF: pipeline -> customer writer: write the customer draft for O-2205
+    {
+      "customer": "Tall Pines Coffee House",
+      "order_id": "O-2205",
+      "product": "Cafe One",
+      "quantity": 25,
+      "planned_ship_in_days": 17,
+      "days_later_than_planned": 2
+    }
+    [customer writer] tokens this call: 370 in, 142 out
+
+>>> HANDOFF: customer writer -> reviewer: draft 1 for O-2205
+    Dear Tall Pines Coffee House,
+    
+    We're writing to let you know about a change to your order, O-2205, for 25 units of the Cafe One. The order is now expected to ship 2 days later than originally planned.
+    
+    We apologize for this delay. It was caused by a delay in a part from one of our suppliers.
+    
+    We appreciate your patience and will keep you updated on the order's progress.
+    
+    Customer Service, Copperline Coffee Machines
+    [reviewer] tokens this call: 653 in, 7 out
+
+>>> HANDOFF: reviewer -> pipeline: APPROVE after 0 revision(s)
+    APPROVE
+[code check] O-2205: names check passed
+
+FINAL DRAFT TO CUSTOMER O-2205
+Dear Tall Pines Coffee House,
+
+We're writing to let you know about a change to your order, O-2205, for 25 units of the Cafe One. The order is now expected to ship 2 days later than originally planned.
+
+We apologize for this delay. It was caused by a delay in a part from one of our suppliers.
+
+We appreciate your patience and will keep you updated on the order's progress.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: yes
+
+======================================================================
+STEP 3 of 3: supplier reply
+======================================================================
+======================================================================
+Supplier reply
+======================================================================
+
+>>> HANDOFF: pipeline -> supplier writer: write the supplier draft for the supplier
+    <email>
+    From: Diane Kessler <d.kessler@danforthpump.example>
+    Subject: PO-5512 - PU-20 pumps - partial shipment
+    
+    Hello,
+    
+    I'm writing about PO-5512 for 200 PU-20 vibration pumps. A test rig on our
+    assembly line failed inspection, and we can't release the full order on the
+    scheduled date.
+    
+    We can deliver 40 of the 200 pumps on the scheduled date. The other 160 will
+    follow 15 days later.
+    
+    We're sorry for the disruption. To help us plan, could you send us a list of
+    the customer orders these pumps are for, with each customer's name and
+    quantity? We'll do our best to keep the delay as short as we can.
+    
+    Diane Kessler
+    Key Accounts, Danforth Pump Works
+    </email>
+    
+    <brief>
+    {
+      "part_id": "PU-20",
+      "what_changed": "Instead of the full 200-unit PO-5512 arriving on day 4, only 40 units will arrive on day 4 and the remaining 160 units will arrive on day 19.",
+      "orders_delayed": 3,
+      "total_units_short": 55,
+      "days_late_range": [
+        2,
+        7
+      ],
+      "options": [],
+      "decisions_for_a_person": [
+        "Decide whether to expedite or source pumps elsewhere for an order and an order, which carry late penalties and will ship 7 and 2 days late respectively under the new schedule.",
+        "Decide how to handle an order, which will ship 4 days late (no penalty, but delay to customer).",
+        "Decide whether/how to respond to Danforth's request for a customer order breakdown (names/quantities), given this may reveal confidential customer data."
+      ],
+      "supplier_questions": [
+        "Danforth asked for a list of the customer orders these pumps are for, including each customer's name and quantity."
+      ],
+      "dates": {
+        "today (day 0)": "Tuesday, November 17, 2026",
+        "day 4": "Saturday, November 21, 2026",
+        "day 19": "Sunday, December 6, 2026"
+      }
+    }
+    </brief>
+    [supplier writer] tokens this call: 1,078 in, 327 out
+
+>>> HANDOFF: supplier writer -> reviewer: draft 1 for the supplier
+    Hello Diane,
+    
+    Thank you for the update on PO-5512. To confirm our understanding: 40 of the 200 PU-20 pumps will arrive on Saturday, November 21, 2026, as originally scheduled, with the remaining 160 units following on Sunday, December 6, 2026.
+    
+    This shortfall affects 3 of our orders, totaling 55 units short, with delays ranging from 2 to 7 days depending on the order. This is a meaningful impact on our side, so we'd appreciate anything you can do to bring forward part of the 160-unit balance, even a partial shipment ahead of December 6, to help reduce the delay.
+    
+    Regarding the customer order breakdown you requested, we're not able to share customer names or order details. We can tell you the shortfall affects 3 orders totaling 55 units if that's helpful for your planning.
+    
+    We appreciate your attention to this and look forward to hearing if any earlier partial delivery is possible.
+    
+    Purchasing, Copperline Coffee Machines
+    [reviewer] tokens this call: 1,449 in, 7 out
+
+>>> HANDOFF: reviewer -> pipeline: APPROVE after 0 revision(s)
+    APPROVE
+[code check] the supplier: names check passed
+
+FINAL DRAFT TO SUPPLIER
+Hello Diane,
+
+Thank you for the update on PO-5512. To confirm our understanding: 40 of the 200 PU-20 pumps will arrive on Saturday, November 21, 2026, as originally scheduled, with the remaining 160 units following on Sunday, December 6, 2026.
+
+This shortfall affects 3 of our orders, totaling 55 units short, with delays ranging from 2 to 7 days depending on the order. This is a meaningful impact on our side, so we'd appreciate anything you can do to bring forward part of the 160-unit balance, even a partial shipment ahead of December 6, to help reduce the delay.
+
+Regarding the customer order breakdown you requested, we're not able to share customer names or order details. We can tell you the shortfall affects 3 orders totaling 55 units if that's helpful for your planning.
+
+We appreciate your attention to this and look forward to hearing if any earlier partial delivery is possible.
+
+Purchasing, Copperline Coffee Machines
+Marked for a person: yes
+
+======================================================================
+SUMMARY (pipeline)
+======================================================================
+Instead of the full 200-unit PO-5512 arriving on day 4, only 40 units will arrive on day 4 and the remaining 160 units will arrive on day 19. Orders at risk: O-2203 (Elm State University Dining), 10 units short, 7 days late, LATE PENALTY; O-2204 (Kettle & Crumb Bakery), 20 units short, 4 days late; O-2205 (Tall Pines Coffee House), 25 units short, 2 days late, LATE PENALTY.
+
+Drafts saved (4) - nothing was sent:
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 7 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2204.txt [customer]: Notice to Kettle & Crumb Bakery about order O-2204 (10 Cafe Duo), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 2 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - supplier-reply.txt [supplier]: Reply to Diane Kessler. The writer was given totals only (3 order(s) delayed, 55 units short, 2-7 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (3):
+  - notice-O-2203.txt: an order with a late penalty is affected
+  - notice-O-2205.txt: an order with a late penalty is affected
+  - supplier-reply.txt: an order with a late penalty is affected
+
+Decisions for a person (3):
+  - Decide whether to expedite or source pumps elsewhere for O-2203 and O-2205, which carry late penalties and will ship 7 and 2 days late respectively under the new schedule.
+  - Decide how to handle O-2204, which will ship 4 days late (no penalty, but delay to customer).
+  - Decide whether/how to respond to Danforth's request for a customer order breakdown (names/quantities), given this may reveal confidential customer data.
+
+Total tokens: 16,072 (14,466 input + 1,606 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         8,830            787
+customer writer            3         1,111            464
+reviewer                   4         3,447             28
+supplier writer            1         1,078            327
+Total                     11        14,466          1,606
+
+Drafts folder: week-05\drafts\copperline-coffee\20261117-223912-pipeline-01-danforth-pump-delay

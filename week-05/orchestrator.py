@@ -1,6 +1,6 @@
 """Coordinator 2: an orchestrator agent for one supplier email.
 
-Claude (claude-sonnet-5, with the prompt in brookfield-bikes/prompts/orchestrator.txt)
+Claude (claude-sonnet-5, with the prompt in <company folder>/prompts/orchestrator.txt)
 decides which specialists the email needs, and calls them through four tools:
   run_supply_analyst, draft_supplier_reply, draft_customer_notice(order_id), finish.
 Each tool runs the same specialist code as pipeline.py (specialists.TeamRun), so every
@@ -13,7 +13,11 @@ the end it prints the same summary as the pipeline.
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-05\\orchestrator.py --email week-05\\brookfield-bikes\\supplier-emails\\02-kendall-tire-options.eml
+    .venv\\Scripts\\python.exe week-05\\orchestrator.py --org copperline-coffee --email week-05\\copperline-coffee\\supplier-emails\\01-danforth-pump-delay.eml
     ... --save week-05\\runs\\orchestrator-02.txt     (also write everything printed to that file)
+
+--org names the company folder (default: week-05/brookfield-bikes). Drafts are saved in
+week-05/drafts/<company folder>/.
 """
 
 import json
@@ -32,7 +36,7 @@ TOOLS = [
         "name": "run_supply_analyst",
         "description": (
             "Have the supply analyst work out how this email affects customer orders, using "
-            "Brookfield's stock, order, and shipment data. Returns the analyst's brief as JSON: "
+            "the company's stock, order, and shipment data. Returns the analyst's brief as JSON: "
             "part_id, what_changed, orders_at_risk, options, decisions_for_a_person, "
             "supplier_questions. Takes no inputs; the analyst already has the email."
         ),
@@ -44,8 +48,9 @@ TOOLS = [
         "description": (
             "Have the supplier writer draft a reply to the supplier, using the analyst's brief if "
             "it has been run. The draft is reviewed (up to 2 revisions), checked, and saved for a "
-            "person; it is never sent. Returns a short summary of the draft, the review status, "
-            "and whether a person must check it. Takes no inputs. Can be called once."
+            "person; it is never sent. Returns the final draft's text (draft_text), a short "
+            "summary, the review status, and whether a person must check it (and why). Takes no "
+            "inputs. Can be called once."
         ),
         "input_schema": NO_INPUT,
         "strict": True,
@@ -56,8 +61,9 @@ TOOLS = [
             "Have the customer writer draft a notice to the customer of one order in the "
             "analyst's orders_at_risk. The draft is reviewed (up to 2 revisions), checked, and "
             "saved for a person; it is never sent. If the supplier offered options, the notice "
-            "is marked for a person, since the delay depends on the option chosen. Returns a "
-            "short summary of the draft and the review status. Call once per order."
+            "is marked for a person, since the delay depends on the option chosen. Returns the "
+            "final draft's text (draft_text), a short summary, and the review status. Call once "
+            "per order."
         ),
         "input_schema": {
             "type": "object",
@@ -71,15 +77,20 @@ TOOLS = [
     {
         "name": "finish",
         "description": (
-            "End the job. Call exactly once, last. You never see the drafts themselves: "
-            "describe each draft only from the summary its drafting tool returned."),
+            "End the job. Call exactly once, last. Describe each draft only from the "
+            "draft_text and summary its drafting tool returned: say only what the draft "
+            "actually says, without softening or strengthening it. For example, if a notice says "
+            "an order is expected to ship late, don't call it a possible delay; if it applies "
+            "only under one option, say the notice itself doesn't mention that. A draft's "
+            "reasons for being marked for a person are not part of the draft. There is one "
+            "supplier reply at most."),
         "input_schema": {
             "type": "object",
             "properties": {
                 "summary": {"type": "string",
-                            "description": "A short summary for Brookfield's purchasing manager."},
+                            "description": "A short summary for the company's purchasing manager."},
                 "needs_decision": {"type": "boolean",
-                                   "description": "True if a person at Brookfield must make a decision."},
+                                   "description": "True if a person at the company must make a decision."},
             },
             "required": ["summary", "needs_decision"],
             "additionalProperties": False,
@@ -103,7 +114,12 @@ async def run_tool(team, name, args):
                 raise ValueError("summary must be a non-empty string.")
             if not isinstance(args.get("needs_decision"), bool):
                 raise ValueError("needs_decision must be true or false.")
-            team.finish(args["summary"].strip(), args["needs_decision"])
+            summary = args["summary"].strip()
+            if team.brief is None:
+                # Whatever the summary says, nothing was checked against the data.
+                summary += ("\n\nNote: the supply analyst was not run, so the effect on "
+                            "customer orders was not checked against the data.")
+            team.finish(summary, args["needs_decision"])
             return "Job finished.", False
         return f"Unknown tool: {name}", True
     except ValueError as exc:
@@ -127,7 +143,7 @@ def call(team, system, messages, tool_choice=None):
 async def coordinate(team):
     system = read_prompt("orchestrator")
     messages = [{"role": "user", "content": (
-        f"Coordinate Brookfield's response to this supplier email. You can make at most "
+        f"Coordinate {team.company}'s response to this supplier email. You can make at most "
         f"{MAX_TOOL_CALLS} tool calls, including finish.\n\n{email_block(team.email)}")}]
     print(f"{RULE}\nOrchestrator ({ORCHESTRATOR_MODEL}; at most {MAX_TOOL_CALLS} tool calls)\n{RULE}")
     calls, finished, nudged = 0, False, False

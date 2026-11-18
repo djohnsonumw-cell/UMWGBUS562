@@ -1,0 +1,27 @@
+To: Diane Kessler <d.kessler@danforthpump.example>
+Subject: Re: PO-5512 - PU-20 pumps - partial shipment
+From: Purchasing, Copperline Coffee Machines
+In reply to: 01-danforth-pump-delay.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 1 revision(s)
+Summary: Reply to Diane Kessler. The writer was given totals only (3 order(s) delayed, 55 units short, 2-7 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 1 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hello Diane,
+
+Thank you for the update on PO-5512. To confirm our understanding: 40 of the 200 PU-20 pumps will arrive on day 4 as originally scheduled, with the remaining 160 arriving 15 days later, on day 19.
+
+We're not able to share customer names or order details — that information is internal to Copperline.
+
+Given the impact on our schedule, we'd ask that you look into whether any portion of the 160 units could be expedited or shipped sooner, even in smaller batches. Please let us know if there's any flexibility there.
+
+Best regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: REVISE
+REVISE
+3. The draft reveals internal customer-order impact details (3 orders affected, 55 units short, 2-7 day delays) to the supplier. Remove this paragraph entirely — a supplier draft should not describe customer order impacts even in aggregate/anonymized form.
+Draft 2: APPROVE
+APPROVE

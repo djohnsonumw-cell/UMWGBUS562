@@ -1,0 +1,22 @@
+To: Owen Brady <o.brady@pelhamfittings.example>
+Subject: Re: Plant maintenance closure - PO-5540 not affected
+From: Purchasing, Copperline Coffee Machines
+In reply to: 04-pelham-maintenance-closure.eml
+Needs a person: no
+Review: APPROVE after 0 revision(s)
+Summary: Reply to Owen Brady. The writer was given totals only (0 order(s) delayed, 0 units short), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hello Owen,
+
+Thanks for the heads-up on the maintenance closure. We confirm PO-5540 for 60 SW-3 steam wands remains scheduled to arrive Saturday, November 28, 2026, with no impact expected.
+
+We appreciate the advance notice and will plan accordingly.
+
+Best regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE

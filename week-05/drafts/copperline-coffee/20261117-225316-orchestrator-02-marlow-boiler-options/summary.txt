@@ -1,0 +1,38 @@
+Coordinator: orchestrator
+Email: 02-marlow-boiler-options.eml
+Subject: PO-5520 - BL-12 boilers - please choose a shipping option
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Marlow Metalworks notified that PO-5520 (200 BL-12 boilers) will be split or delayed due to reduced welding capacity, offering two options: (A) 80 units on schedule + 120 units two weeks later, or (B) all 200 units six days late. Each option risks a different customer order with a late penalty: Option A delays O-2205 (Tall Pines Coffee House, 5 units short, 4 days late); Option B delays O-2203 (Elm State University Dining, 40 units short, 1 day late). Marlow needs our choice within 3 business days or will default to Option B.
+
+Drafts prepared for review:
+1. Supplier reply to Marlow acknowledging both options, summarizing impact, and asking if either gap can be closed, while stating we'll confirm our choice within the deadline (does not commit to an option - requires decision).
+2. Customer notice to Tall Pines Coffee House (O-2205) warning of a possible 4-day delay (applies if Option A is chosen).
+3. Customer notice to Elm State University Dining (O-2203) warning of a possible 1-day delay (applies if Option B is chosen).
+
+All three drafts are saved for review but not sent. A person must decide which shipping option to choose and confirm with the supplier within the deadline, then release the corresponding customer notice.
+
+Drafts saved (3) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Victor Lindqvist. The writer was given totals only (per option: Option A (80 on day 7, 120 on day 21): 1 order(s) delayed, 5 units short, 4 days late; Option B (200 together on day 13): 1 order(s) delayed, 40 units short, 1 day late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 1 day later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (3):
+  - supplier-reply.txt: an order with a late penalty is affected
+  - notice-O-2205.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option A (80 on day 7, 120 on day 21); the notice uses the analyst's numbers for that case)
+  - notice-O-2203.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option B (200 together on day 13); the notice uses the analyst's numbers for that case)
+
+Decisions for a person (2):
+  - Choose between Option A (puts order O-2205, 4 days late, 5 units short, late_penalty=true, at risk) and Option B (puts order O-2203, 1 day late, 40 units short, late_penalty=true, at risk) within the supplier's 3-business-day deadline.
+  - If no decision is made in time, Marlow Metalworks will default to Option B, risking O-2203.
+
+Total tokens: 32,473 (29,405 input + 3,068 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         8,641            956
+supply analyst             4        15,866          1,572
+supplier writer            1         1,249            209
+reviewer                   3         2,912             21
+customer writer            2           737            310
+Total                     13        29,405          3,068

@@ -1,0 +1,22 @@
+To: Elm State University Dining <dining@elmstate.example>
+Subject: Update on your Copperline Coffee Machines order O-2203
+From: Customer Service, Copperline Coffee Machines
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 0 revision(s)
+Summary: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 7 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Dear Elm State University Dining,
+
+We're writing about your order O-2203 for 50 Cafe One units. This order was originally planned to ship in 12 days, but it is now expected to ship 7 days later than planned.
+
+We apologize for this delay. It is due to a delay in a part from one of our suppliers.
+
+We will keep you updated on the status of your order and let you know if anything changes. Thank you for your patience and for choosing Copperline Coffee Machines.
+
+Customer Service, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE

@@ -1,0 +1,27 @@
+To: Victor Lindqvist <v.lindqvist@marlowmetal.example>
+Subject: Re: PO-5520 - BL-12 boilers - please choose a shipping option
+From: Purchasing, Copperline Coffee Machines
+In reply to: 02-marlow-boiler-options.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 0 revision(s)
+Summary: Reply to Victor Lindqvist. The writer was given totals only (2 order(s) delayed, 45 units short, 1-4 days late; 2 supplier option(s) compared), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hi Victor,
+
+Thank you for the heads-up on PO-5520. We understand the welding cell capacity issue is limiting you to two options:
+
+- Option A: 80 boilers on November 24, with the remaining 120 on December 8
+- Option B: all 200 boilers together on November 30 (six days late)
+
+Either option affects one of our downstream orders, with a total shortfall of 45 units and delays ranging from 1 to 4 days depending on the option chosen. We're reviewing the impact internally and will confirm our choice within your three-business-day window.
+
+In the meantime, is there any way to pull forward additional units sooner, either increasing the initial shipment under Option A or moving up the date under Option B? Any improvement there would help reduce the delay on our end.
+
+Regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE

@@ -1,0 +1,30 @@
+To: Diane Kessler <d.kessler@danforthpump.example>
+Subject: Re: PO-5512 - PU-20 pumps - partial shipment
+From: Purchasing, Copperline Coffee Machines
+In reply to: 01-danforth-pump-delay.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 1 revision(s)
+Summary: Reply to Diane Kessler. The writer was given totals only (3 order(s) delayed, 55 units short, 2-7 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 1 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hello Diane,
+
+Thank you for letting us know about PO-5512. We've received your update and are reviewing the proposed schedule: 40 of the 200 PU-20 pumps on day 4 as originally scheduled, with the remaining 160 now proposed for day 19.
+
+This change will have an impact on our downstream commitments. Please let us know if there is any way to ship more of the 160 units sooner, even in partial batches, as that would help reduce the delay on our end.
+
+We're not able to share customer names or order details.
+
+Regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: REVISE
+REVISE
+
+3. The draft discloses internal customer order impact details (3 customer orders, 55 units short, 2-7 days delay) to a supplier — this describes customer orders' impact and should be removed. Replace with a simple acknowledgment of the revised delivery plan and the request for partial/earlier shipment, without referencing customer order counts, unit shortfalls, or delay ranges tied to customer orders.
+
+5. "We confirm the revised plan" accepts/agrees to the delayed delivery schedule as final, which is a decision reserved for a person. Change to acknowledge receipt of the proposed plan without confirming agreement to it (e.g., "We've received your update and are reviewing the proposed schedule").
+Draft 2: APPROVE
+APPROVE

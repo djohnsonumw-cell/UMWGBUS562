@@ -1,0 +1,26 @@
+To: Victor Lindqvist <v.lindqvist@marlowmetal.example>
+Subject: Re: PO-5520 - BL-12 boilers - please choose a shipping option
+From: Purchasing, Copperline Coffee Machines
+In reply to: 02-marlow-boiler-options.eml
+Needs a person: no
+Review: APPROVE after 0 revision(s)
+Summary: Reply to Victor Lindqvist. The writer was given totals only (per option: Option A: 80 on day 7 + 120 on day 21: 1 order(s) delayed, 5 units short, 4 days late; Option B: 200 on day 13: 1 order(s) delayed, 40 units short, 1 day late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hi Victor,
+
+Thank you for the heads-up on PO-5520. To confirm our understanding of the two options:
+
+Option A: 80 boilers on November 24, with the remaining 120 on December 8. This would leave one order 5 units short and 4 days late.
+
+Option B: all 200 boilers on November 30. This would leave one order 40 units short and 1 day late.
+
+We will confirm our choice within the three business days you've requested. If there is any way to ship more units sooner under either option, or shorten the delay, please let us know, as that would help us reduce the impact on our side.
+
+Regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE

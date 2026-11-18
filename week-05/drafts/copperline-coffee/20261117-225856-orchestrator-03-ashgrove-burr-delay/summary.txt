@@ -1,0 +1,23 @@
+Coordinator: orchestrator
+Email: 03-ashgrove-burr-delay.eml
+Subject: PO-5531 - BR-64 burr sets - arriving 3 days late
+A person needs to make a decision: no
+
+SUMMARY FOR THE PURCHASING MANAGER
+Ashgrove Precision notified that PO-5531 (120 BR-64 burr sets) will arrive 3 days late due to a furnace repair. The supply analyst found no customer orders at risk from this delay, so no customer notices or supplier reply were drafted. No action needed.
+
+Drafts saved (0) - nothing was sent:
+  - none
+
+Drafts marked for a person (0):
+  - none
+
+Decisions for a person (0):
+  - none
+
+Total tokens: 11,500 (10,880 input + 620 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               2         3,539            261
+supply analyst             3         7,341            359
+Total                      5        10,880            620

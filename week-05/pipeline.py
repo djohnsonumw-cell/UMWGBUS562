@@ -6,14 +6,18 @@ The specialists from specialists.py run in the same order for every email:
      goes through the review step;
   3. a reply to the supplier, which also goes through the review step.
 At the end it prints a summary: drafts saved, drafts marked for a person, decisions for
-a person, and total tokens. Drafts are saved in week-05/drafts/<run>/. Nothing is sent.
+a person, and total tokens. Nothing is sent.
 
 If the supplier offers options, the notices are still drafted, but each one is marked
 for a person: whether that order is late depends on the option a person chooses.
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-05\\pipeline.py --email week-05\\brookfield-bikes\\supplier-emails\\01-northgate-controller-delay.eml
+    .venv\\Scripts\\python.exe week-05\\pipeline.py --org copperline-coffee --email week-05\\copperline-coffee\\supplier-emails\\01-danforth-pump-delay.eml
     ... --save week-05\\runs\\pipeline-01.txt     (also write everything printed to that file)
+
+--org names the company folder (default: week-05/brookfield-bikes). Drafts are saved in
+week-05/drafts/<company folder>/.
 """
 
 from common import RULE
@@ -30,11 +34,14 @@ def summarize(brief):
     elif brief["orders_at_risk"]:
         parts.append("Orders at risk: " + "; ".join(
             f"{o['order_id']} ({o['customer']}), {o['units_short']} units short, "
-            f"{o['days_late'] if o['days_late'] is not None else 'unknown'} days late"
+            f"{o['days_late'] if o['days_late'] is not None else 'unknown'} "
+            f"day{'' if o['days_late'] == 1 else 's'} late"
             f"{', LATE PENALTY' if o['late_penalty'] else ''}"
             for o in brief["orders_at_risk"]) + ".")
     else:
         parts.append("No customer orders are at risk.")
+        if brief.get("slack"):
+            parts.append(brief["slack"]["note"])
     return " ".join(parts)
 
 

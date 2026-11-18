@@ -1,0 +1,24 @@
+Coordinator: pipeline
+Email: 03-ashgrove-burr-delay.eml
+Subject: PO-5531 - BR-64 burr sets - arriving 3 days late
+A person needs to make a decision: no
+
+SUMMARY FOR THE PURCHASING MANAGER
+PO-5531's 120 BR-64 burr sets will now arrive on day 13 instead of day 10 (3 days late), shipping as a single full shipment. No customer orders are at risk.
+
+Drafts saved (1) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Priya Raman. The writer was given totals only (0 order(s) delayed, 0 units short), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (0):
+  - none
+
+Decisions for a person (0):
+  - none
+
+Total tokens: 9,652 (9,136 input + 516 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         7,253            359
+supplier writer            1           831            150
+reviewer                   1         1,052              7
+Total                      5         9,136            516

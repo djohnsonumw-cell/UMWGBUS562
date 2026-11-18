@@ -1,0 +1,40 @@
+{
+  "part_id": "BL-12",
+  "what_changed": "Marlow Metalworks cannot ship the full PO-5520 (200 BL-12 boilers) on the original day-7 date, and offers either a split shipment (80 on day 7, 120 on day 21) or a full shipment of 200 on day 13.",
+  "orders_at_risk": [],
+  "options": [
+    {
+      "name": "Option A: 80 on day 7 + 120 on day 21",
+      "order_ids": [
+        "O-2205"
+      ],
+      "impact": [
+        {
+          "order_id": "O-2205",
+          "units_short": 5,
+          "days_late": 4
+        }
+      ]
+    },
+    {
+      "name": "Option B: 200 on day 13",
+      "order_ids": [
+        "O-2203"
+      ],
+      "impact": [
+        {
+          "order_id": "O-2203",
+          "units_short": 40,
+          "days_late": 1
+        }
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose between Option A (delays order O-2205, 4 days late, penalty applies) and Option B (delays order O-2203, 1 day late, penalty applies) within three business days, or Marlow will default to Option B.",
+    "Consider which late-penalty order is more costly/important to prioritize: O-2203 (Elm State University Dining, 40 units short, 1 day late) vs O-2205 (Tall Pines Coffee House, 5 units short, 4 days late)."
+  ],
+  "supplier_questions": [
+    "Which shipping option (A or B) would you like for PO-5520?"
+  ]
+}

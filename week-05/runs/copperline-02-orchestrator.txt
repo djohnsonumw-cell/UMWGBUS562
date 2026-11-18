@@ -1,0 +1,445 @@
+Company: Copperline Coffee Machines (week-05\copperline-coffee)
+Coordinator: orchestrator
+Email: 02-marlow-boiler-options.eml
+From: v.lindqvist@marlowmetal.example
+Subject: PO-5520 - BL-12 boilers - please choose a shipping option
+Specialist model: claude-sonnet-5
+Run folder: week-05\drafts\copperline-coffee\20261117-225521-orchestrator-02-marlow-boiler-options
+
+======================================================================
+Orchestrator (claude-sonnet-5; at most 10 tool calls)
+======================================================================
+    [orchestrator] tokens this call: 1,772 in, 48 out
+
+[orchestrator] CHOICE 1/10: run_supply_analyst
+
+>>> HANDOFF: orchestrator -> supply analyst: analyze 02-marlow-boiler-options.eml
+    <email>
+    From: Victor Lindqvist <v.lindqvist@marlowmetal.example>
+    Subject: PO-5520 - BL-12 boilers - please choose a shipping option
+    
+    Hi,
+    
+    About PO-5520 for 200 BL-12 boilers: our welding cell is running at half
+    capacity this month, so we can't ship the whole order on time. We can offer
+    two options:
+    
+    Option A: Ship 80 boilers on the scheduled date, and the remaining 120 two
+    weeks after that.
+    
+    Option B: Ship all 200 boilers together, six days after the scheduled date.
+    
+    Please let us know which option you'd like within three business days. If we
+    don't hear from you by then, we'll go with Option B.
+    
+    Regards,
+    Victor Lindqvist
+    Sales Coordinator, Marlow Metalworks
+    </email>
+======================================================================
+Supply analyst (claude-sonnet-5; MCP server: supply_mcp_server.py)
+======================================================================
+    [supply analyst] tokens this call: 1,859 in, 106 out
+[supply analyst] tool call 1/10: get_part {"part_id": "BL-12"}
+  result: {
+  "part_id": "BL-12",
+  "description": "1.2-liter boiler",
+  "supplier": "Marlow Metalworks",
+  "on_hand": 60,
+  "scheduled_shipments": [
+    {
+      "po_number": "PO-5520",
+      "supplier": "Marlow Metalworks",
+      "qty": 200,
+      "day": 7
+    }
+  ],
+  "used_in": [
+    {
+      "product": "Ca...
+
+[supply analyst] tool call 2/10: get_orders_for_part {"part_id": "BL-12"}
+  result: {
+  "part_id": "BL-12",
+  "orders": [
+    {
+      "order_id": "O-2201",
+      "customer": "Morning Ritual Cafe",
+      "product": "Cafe One",
+      "quantity": 20,
+      "units_needed": 20,
+      "ship_day": 6,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-2202",
+      "customer": "H...
+
+    [supply analyst] tokens this call: 2,903 in, 250 out
+[supply analyst] tool call 3/10: check_coverage {"part_id": "BL-12", "arrivals": [{"qty": 80, "day": 7}, {"qty": 120, "day": 21}]}
+  result: {
+  "part_id": "BL-12",
+  "on_hand": 60,
+  "arrivals_used": [
+    {
+      "qty": 80,
+      "day": 7
+    },
+    {
+      "qty": 120,
+      "day": 21
+    }
+  ],
+  "replaced_schedule": [
+    {
+      "qty": 200,
+      "day": 7
+    }
+  ],
+  "total_units_needed": 184,
+  "total_units_available": 260,
+  "ord...
+
+[supply analyst] tool call 4/10: check_coverage {"part_id": "BL-12", "arrivals": [{"qty": 200, "day": 13}]}
+  result: {
+  "part_id": "BL-12",
+  "on_hand": 60,
+  "arrivals_used": [
+    {
+      "qty": 200,
+      "day": 13
+    }
+  ],
+  "replaced_schedule": [
+    {
+      "qty": 200,
+      "day": 7
+    }
+  ],
+  "total_units_needed": 184,
+  "total_units_available": 260,
+  "orders": [
+    {
+      "order_id": "O-2201",
+   ...
+
+    [supply analyst] tokens this call: 5,194 in, 659 out
+[supply analyst] finished after 4 tool call(s).
+
+>>> HANDOFF: supply analyst -> orchestrator: brief (in full below)
+ANALYST'S BRIEF
+{
+  "part_id": "BL-12",
+  "what_changed": "Marlow Metalworks' PO-5520 (200 BL-12 boilers, originally due day 7) will now ship either as 80 units on day 7 plus 120 units on day 21 (Option A), or all 200 units together on day 13 (Option B).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-2205",
+      "customer": "Tall Pines Coffee House",
+      "product": "Cafe One",
+      "quantity": 25,
+      "units_short": 5,
+      "ship_day": 17,
+      "ready_day": 21,
+      "days_late": 4,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-2203",
+      "customer": "Elm State University Dining",
+      "product": "Cafe One",
+      "quantity": 50,
+      "units_short": 40,
+      "ship_day": 12,
+      "ready_day": 13,
+      "days_late": 1,
+      "late_penalty": true
+    }
+  ],
+  "options": [
+    {
+      "name": "Option A (80 on day 7, 120 on day 21)",
+      "order_ids": [
+        "O-2205"
+      ],
+      "impact": [
+        {
+          "order_id": "O-2205",
+          "units_short": 5,
+          "days_late": 4
+        }
+      ]
+    },
+    {
+      "name": "Option B (200 on day 13)",
+      "order_ids": [
+        "O-2203"
+      ],
+      "impact": [
+        {
+          "order_id": "O-2203",
+          "units_short": 40,
+          "days_late": 1
+        }
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose between Option A (risks O-2205, Tall Pines Coffee House, 5 units short, 4 days late, has late penalty) and Option B (risks O-2203, Elm State University Dining, 40 units short, 1 day late, has late penalty) within three business days, or Marlow will default to Option B.",
+    "Both options put a late-penalty order at risk; decide which penalty/customer impact is preferable, or consider expediting/reallocating stock to avoid shortfall entirely."
+  ],
+  "supplier_questions": [
+    "Which shipping option (A or B) would Copperline like for PO-5520, to be confirmed within three business days?"
+  ]
+}
+END OF BRIEF
+
+[orchestrator] result of run_supply_analyst: {
+  "part_id": "BL-12",
+  "what_changed": "Marlow Metalworks' PO-5520 (200 BL-12 boilers, originally due day 7) will now ship either as 80 units on day 7 plus 120 units on day 21 (Option A), or all 200 units together on day 13 (Option B).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-2205",
+      "customer": "Tall Pines Coffee House",
+      "product": "Cafe One",
+      "quantity": 25,
+      "...
+    [orchestrator] tokens this call: 2,612 in, 1,018 out
+
+[orchestrator] CHOICE 2/10: draft_supplier_reply
+======================================================================
+Supplier reply
+======================================================================
+
+>>> HANDOFF: orchestrator -> supplier writer: write the supplier draft for the supplier
+    <email>
+    From: Victor Lindqvist <v.lindqvist@marlowmetal.example>
+    Subject: PO-5520 - BL-12 boilers - please choose a shipping option
+    
+    Hi,
+    
+    About PO-5520 for 200 BL-12 boilers: our welding cell is running at half
+    capacity this month, so we can't ship the whole order on time. We can offer
+    two options:
+    
+    Option A: Ship 80 boilers on the scheduled date, and the remaining 120 two
+    weeks after that.
+    
+    Option B: Ship all 200 boilers together, six days after the scheduled date.
+    
+    Please let us know which option you'd like within three business days. If we
+    don't hear from you by then, we'll go with Option B.
+    
+    Regards,
+    Victor Lindqvist
+    Sales Coordinator, Marlow Metalworks
+    </email>
+    
+    <brief>
+    {
+      "part_id": "BL-12",
+      "what_changed": "Marlow Metalworks' PO-5520 (200 BL-12 boilers, originally due day 7) will now ship either as 80 units on day 7 plus 120 units on day 21 (Option A), or all 200 units together on day 13 (Option B).",
+      "impact_by_option": [
+        {
+          "option": "Option A (80 on day 7, 120 on day 21)",
+          "orders_delayed": 1,
+          "units_short": 5,
+          "days_late_range": [
+            4,
+            4
+          ]
+        },
+        {
+          "option": "Option B (200 on day 13)",
+          "orders_delayed": 1,
+          "units_short": 40,
+          "days_late_range": [
+            1,
+            1
+          ]
+        }
+      ],
+      "impact_note": "Only one option will happen. Give the impact of each option separately; never add the options together.",
+      "decisions_for_a_person": [
+        "Choose between Option A (risks an order, a customer, 5 units short, 4 days late, has late penalty) and Option B (risks an order, a customer, 40 units short, 1 day late, has late penalty) within three business days, or Marlow will default to Option B.",
+        "Both options put a late-penalty order at risk; decide which penalty/customer impact is preferable, or consider expediting/reallocating stock to avoid shortfall entirely."
+      ],
+      "supplier_questions": [
+        "Which shipping option (A or B) would Copperline like for PO-5520, to be confirmed within three business days?"
+      ],
+      "dates": {
+        "today (day 0)": "Tuesday, November 17, 2026",
+        "day 7": "Tuesday, November 24, 2026",
+        "day 13": "Monday, November 30, 2026",
+        "day 21": "Tuesday, December 8, 2026"
+      }
+    }
+    </brief>
+    [supplier writer] tokens this call: 1,279 in, 208 out
+
+>>> HANDOFF: supplier writer -> reviewer: draft 1 for the supplier
+    Hi Victor,
+    
+    Thanks for the heads-up on PO-5520. To confirm our understanding:
+    
+    - Option A: 80 boilers on November 24, remaining 120 on December 8. This leaves one order 5 units short and about 4 days late.
+    - Option B: all 200 boilers together on November 30. This leaves one order 40 units short and about 1 day late.
+    
+    We'll confirm our choice within three business days, as requested. In the meantime, if there's any way to ship more units sooner under either option, that would help reduce the impact on our side - please let us know what's possible.
+    
+    Regards,
+    Purchasing, Copperline Coffee Machines
+    [reviewer] tokens this call: 1,558 in, 7 out
+
+>>> HANDOFF: reviewer -> orchestrator: APPROVE after 0 revision(s)
+    APPROVE
+[code check] the supplier: names check passed
+
+FINAL DRAFT TO SUPPLIER
+Hi Victor,
+
+Thanks for the heads-up on PO-5520. To confirm our understanding:
+
+- Option A: 80 boilers on November 24, remaining 120 on December 8. This leaves one order 5 units short and about 4 days late.
+- Option B: all 200 boilers together on November 30. This leaves one order 40 units short and about 1 day late.
+
+We'll confirm our choice within three business days, as requested. In the meantime, if there's any way to ship more units sooner under either option, that would help reduce the impact on our side - please let us know what's possible.
+
+Regards,
+Purchasing, Copperline Coffee Machines
+Marked for a person: yes
+
+[orchestrator] result of draft_supplier_reply: {"file": "supplier-reply.txt", "recipient": "supplier", "status": "APPROVE after 0 revision(s)", "summary": "Reply to Victor Lindqvist. The writer was given totals only (per option: Option A (80 on day 7, 120 on day 21): 1 order(s) delayed, 5 units short, 4 days late; Option B (200 on day 13): 1 order(s) delayed, 40 units short, 1 day late), with no customer names or order numbers. Code check: nam...
+
+[orchestrator] CHOICE 3/10: draft_customer_notice {"order_id": "O-2205"}
+======================================================================
+Customer notice for O-2205
+======================================================================
+
+>>> HANDOFF: orchestrator -> customer writer: write the customer draft for O-2205
+    {
+      "customer": "Tall Pines Coffee House",
+      "order_id": "O-2205",
+      "product": "Cafe One",
+      "quantity": 25,
+      "planned_ship_in_days": 17,
+      "days_later_than_planned": 4
+    }
+    [customer writer] tokens this call: 370 in, 157 out
+
+>>> HANDOFF: customer writer -> reviewer: draft 1 for O-2205
+    Dear Tall Pines Coffee House,
+    
+    We're writing about your order O-2205 for 25 units of the Cafe One. This order is now expected to ship 4 days later than originally planned.
+    
+    We apologize for this delay. It is due to a delay in a part from one of our suppliers.
+    
+    We appreciate your patience and will keep you updated on the status of your order. If you have any questions in the meantime, please don't hesitate to reach out.
+    
+    Customer Service, Copperline Coffee Machines
+    [reviewer] tokens this call: 695 in, 7 out
+
+>>> HANDOFF: reviewer -> orchestrator: APPROVE after 0 revision(s)
+    APPROVE
+[code check] O-2205: names check passed
+
+FINAL DRAFT TO CUSTOMER O-2205
+Dear Tall Pines Coffee House,
+
+We're writing about your order O-2205 for 25 units of the Cafe One. This order is now expected to ship 4 days later than originally planned.
+
+We apologize for this delay. It is due to a delay in a part from one of our suppliers.
+
+We appreciate your patience and will keep you updated on the status of your order. If you have any questions in the meantime, please don't hesitate to reach out.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: yes
+
+[orchestrator] result of draft_customer_notice: {"file": "notice-O-2205.txt", "recipient": "customer", "status": "APPROVE after 0 revision(s)", "summary": "Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).", "draft_text": "Dear Tall Pines Coffee House,\n\nWe're writing about your order ...
+
+[orchestrator] CHOICE 4/10: draft_customer_notice {"order_id": "O-2203"}
+======================================================================
+Customer notice for O-2203
+======================================================================
+
+>>> HANDOFF: orchestrator -> customer writer: write the customer draft for O-2203
+    {
+      "customer": "Elm State University Dining",
+      "order_id": "O-2203",
+      "product": "Cafe One",
+      "quantity": 50,
+      "planned_ship_in_days": 12,
+      "days_later_than_planned": 1
+    }
+    [customer writer] tokens this call: 367 in, 148 out
+
+>>> HANDOFF: customer writer -> reviewer: draft 1 for O-2203
+    Dear Elm State University Dining,
+    
+    We're writing about your order O-2203 for 50 Cafe One units. We're sorry to let you know this order is now expected to ship 1 day later than originally planned.
+    
+    The delay is due to a delay in a part from one of our suppliers.
+    
+    We understand timing is important and appreciate your patience. If you have any questions in the meantime, please don't hesitate to reach out.
+    
+    Customer Service, Copperline Coffee Machines
+    [reviewer] tokens this call: 683 in, 7 out
+
+>>> HANDOFF: reviewer -> orchestrator: APPROVE after 0 revision(s)
+    APPROVE
+[code check] O-2203: names check passed
+
+FINAL DRAFT TO CUSTOMER O-2203
+Dear Elm State University Dining,
+
+We're writing about your order O-2203 for 50 Cafe One units. We're sorry to let you know this order is now expected to ship 1 day later than originally planned.
+
+The delay is due to a delay in a part from one of our suppliers.
+
+We understand timing is important and appreciate your patience. If you have any questions in the meantime, please don't hesitate to reach out.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: yes
+
+[orchestrator] result of draft_customer_notice: {"file": "notice-O-2203.txt", "recipient": "customer", "status": "APPROVE after 0 revision(s)", "summary": "Notice to Elm State University Dining about order O-2203 (50 Cafe One), 1 day later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).", "draft_text": "Dear Elm State University Dining,\n\nWe're writing about your...
+    [orchestrator] tokens this call: 5,122 in, 552 out
+
+[orchestrator] CHOICE 5/10: finish {"summary": "Marlow Metalworks can't ship PO-5520 (200 BL-12 boilers) on time and offered two options: (A) 80 units on schedule + 120 units two weeks later, or (B) all 200 units together, 6 days late (their default if we don't respond in 3 business days). Impact: Option A puts order O-2205 (Tall Pines Coffee House, 25 Cafe One units) 5 units short and 4 days late; Option B puts order O-2203 (Elm State University Dining, 50 Cafe One units) 40 units short and 1 day late. Both affected orders carry late penalties, so a person must decide which option to choose (or push the supplier for a better alternative) within the 3-day window.\n\nDrafts prepared and saved for review (not sent):\n1. Supplier reply to Victor Lindqvist confirming understanding of both options' impact and asking if more units could ship sooner under either option; states we'll confirm our choice within 3 business days.\n2. Customer notice to Tall Pines Coffee House (O-2205) stating the order is now expected to ship 4 days later than planned, due to a supplier part delay - applicable only if Option A is chosen.\n3. Customer notice to Elm State University Dining (O-2203) stating the order is now expected to ship 1 day later than planned, due to a supplier part delay - applicable only if Option B is chosen.\n\nAll three drafts are marked for human review, partly because the outcome depends on which shipping option is selected.", "needs_decision": true}
+[orchestrator] result of finish: Job finished.
+[orchestrator] done after 5 tool call(s).
+======================================================================
+SUMMARY (orchestrator)
+======================================================================
+Marlow Metalworks can't ship PO-5520 (200 BL-12 boilers) on time and offered two options: (A) 80 units on schedule + 120 units two weeks later, or (B) all 200 units together, 6 days late (their default if we don't respond in 3 business days). Impact: Option A puts order O-2205 (Tall Pines Coffee House, 25 Cafe One units) 5 units short and 4 days late; Option B puts order O-2203 (Elm State University Dining, 50 Cafe One units) 40 units short and 1 day late. Both affected orders carry late penalties, so a person must decide which option to choose (or push the supplier for a better alternative) within the 3-day window.
+
+Drafts prepared and saved for review (not sent):
+1. Supplier reply to Victor Lindqvist confirming understanding of both options' impact and asking if more units could ship sooner under either option; states we'll confirm our choice within 3 business days.
+2. Customer notice to Tall Pines Coffee House (O-2205) stating the order is now expected to ship 4 days later than planned, due to a supplier part delay - applicable only if Option A is chosen.
+3. Customer notice to Elm State University Dining (O-2203) stating the order is now expected to ship 1 day later than planned, due to a supplier part delay - applicable only if Option B is chosen.
+
+All three drafts are marked for human review, partly because the outcome depends on which shipping option is selected.
+
+Drafts saved (3) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Victor Lindqvist. The writer was given totals only (per option: Option A (80 on day 7, 120 on day 21): 1 order(s) delayed, 5 units short, 4 days late; Option B (200 on day 13): 1 order(s) delayed, 40 units short, 1 day late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 1 day later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (3):
+  - supplier-reply.txt: an order with a late penalty is affected
+  - notice-O-2205.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option A (80 on day 7, 120 on day 21); the notice uses the analyst's numbers for that case)
+  - notice-O-2203.txt: an order with a late penalty is affected; depends on which option is chosen (late only under Option B (200 on day 13); the notice uses the analyst's numbers for that case)
+
+Decisions for a person (2):
+  - Choose between Option A (risks O-2205, Tall Pines Coffee House, 5 units short, 4 days late, has late penalty) and Option B (risks O-2203, Elm State University Dining, 40 units short, 1 day late, has late penalty) within three business days, or Marlow will default to Option B.
+  - Both options put a late-penalty order at risk; decide which penalty/customer impact is preferable, or consider expediting/reallocating stock to avoid shortfall entirely.
+
+Total tokens: 27,581 (24,414 input + 3,167 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         9,506          1,618
+supply analyst             3         9,956          1,015
+supplier writer            1         1,279            208
+reviewer                   3         2,936             21
+customer writer            2           737            305
+Total                     12        24,414          3,167
+
+Drafts folder: week-05\drafts\copperline-coffee\20261117-225521-orchestrator-02-marlow-boiler-options

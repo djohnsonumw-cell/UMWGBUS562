@@ -1,0 +1,31 @@
+Coordinator: pipeline
+Email: 01-danforth-pump-delay.eml
+Subject: PO-5512 - PU-20 pumps - partial shipment
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Of PO-5512's 200 PU-20 pumps, only 40 will arrive on day 4 as originally scheduled, with the remaining 160 arriving 15 days later, on day 19. Orders at risk: O-2203 (Elm State University Dining), 10 units short, 7 days late, LATE PENALTY; O-2204 (Kettle & Crumb Bakery), 20 units short, 4 days late; O-2205 (Tall Pines Coffee House), 25 units short, 2 days late, LATE PENALTY.
+
+Drafts saved (4) - nothing was sent:
+  - notice-O-2203.txt [customer]: Notice to Elm State University Dining about order O-2203 (50 Cafe One), 7 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2204.txt [customer]: Notice to Kettle & Crumb Bakery about order O-2204 (10 Cafe Duo), 4 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-2205.txt [customer]: Notice to Tall Pines Coffee House about order O-2205 (25 Cafe One), 2 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - supplier-reply.txt [supplier]: Reply to Diane Kessler. The writer was given totals only (3 order(s) delayed, 55 units short, 2-7 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 1 revision(s).
+
+Drafts marked for a person (3):
+  - notice-O-2203.txt: an order with a late penalty is affected
+  - notice-O-2205.txt: an order with a late penalty is affected
+  - supplier-reply.txt: an order with a late penalty is affected
+
+Decisions for a person (2):
+  - Decide whether to notify affected customers (Elm State University Dining, Kettle & Crumb Bakery, Tall Pines Coffee House) of expected delays to day 19, especially the two orders with late penalties (O-2203, O-2205).
+  - Decide whether to respond to Danforth Pump Works' request for a list of customer names/quantities tied to this PO, and whether to push for an expedited partial delivery given the penalty exposure.
+
+Total tokens: 18,774 (16,249 input + 2,525 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         8,830            789
+customer writer            3         1,060            496
+reviewer                   5         4,143            781
+supplier writer            2         2,216            459
+Total                     13        16,249          2,525

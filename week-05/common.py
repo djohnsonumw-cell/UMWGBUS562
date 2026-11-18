@@ -9,6 +9,7 @@
 
 import json
 import os
+import re
 import sys
 from email import policy
 from email.parser import BytesParser
@@ -17,9 +18,12 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
-DATA_DIR = HERE / "brookfield-bikes"
-PROMPTS_DIR = DATA_DIR / "prompts"
+DEFAULT_ORG = HERE / "brookfield-bikes"
 DRAFTS_DIR = HERE / "drafts"
+# What a company folder (--org) must hold, directly inside it.
+ORG_CSV_FILES = ("parts.csv", "orders.csv", "inbound.csv", "bill-of-materials.csv",
+                 "suppliers.csv")
+ORG_PROMPTS = ("analyst", "supplier-writer", "customer-writer", "reviewer", "orchestrator")
 KEY_FILES = [REPO.parent / "API Key.txt", REPO.parent / "API-Key.txt"]
 
 MODEL = "claude-opus-5-5"
@@ -59,8 +63,56 @@ def load_api_key():
              f"'{KEY_FILES[0].name}' in {REPO.parent}.")
 
 
+# ---------------------------------------------------------------------------
+# The company folder (--org)
+# ---------------------------------------------------------------------------
+
+_org = {"dir": DEFAULT_ORG}
+
+
+def resolve_org(value):
+    """--org value -> the company folder. Takes a folder name in week-05 (copperline-coffee)
+    or a path; None means week-05/brookfield-bikes. Exits if the folder is incomplete."""
+    if not value:
+        path = DEFAULT_ORG
+    else:
+        path = Path(value)
+        if not path.is_dir() and (HERE / value).is_dir():
+            path = HERE / value
+    path = path.resolve()
+    if not path.is_dir():
+        sys.exit(f"Company folder not found: {value}")
+    needed = list(ORG_CSV_FILES) + [f"prompts/{p}.txt" for p in ORG_PROMPTS]
+    missing = [n for n in needed if not (path / n).is_file()]
+    if missing:
+        inner = [d for d in path.iterdir() if d.is_dir() and (d / "orders.csv").is_file()]
+        hint = f" (the files seem to be one folder down, in {inner[0].name}/)" if inner else ""
+        sys.exit(f"{path} is missing: {', '.join(missing)}{hint}")
+    return path
+
+
+def set_org(path):
+    _org["dir"] = Path(path)
+
+
+def org_dir():
+    return _org["dir"]
+
+
+def org_name():
+    """The company folder's name, e.g. copperline-coffee (used for the drafts folder)."""
+    return org_dir().name
+
+
+def company_name():
+    """The company's name, from the "Sign as: Team, Company" line of its writer prompt."""
+    match = re.search(r"Sign as:\s*[^,\n]+,\s*(.+)", read_prompt("supplier-writer"))
+    return match.group(1).strip() if match else org_name().replace("-", " ").title()
+
+
 def read_prompt(name):
-    return (PROMPTS_DIR / f"{name}.txt").read_text(encoding="utf-8").strip()
+    """A specialist's system prompt, read from the current company folder each time."""
+    return (org_dir() / "prompts" / f"{name}.txt").read_text(encoding="utf-8").strip()
 
 
 def parse_email(path):

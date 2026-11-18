@@ -1,0 +1,5 @@
+po_number,part_id,supplier,qty,arrives_in_days
+PO-5512,PU-20,Danforth Pump Works,200,4
+PO-5520,BL-12,Marlow Metalworks,200,7
+PO-5531,BR-64,Ashgrove Precision,120,10
+PO-5540,SW-3,Pelham Fittings,60,11

@@ -1,0 +1,36 @@
+To: Victor Lindqvist <v.lindqvist@marlowmetal.example>
+Subject: Re: PO-5520 - BL-12 boilers - please choose a shipping option
+From: Purchasing, Copperline Coffee Machines
+In reply to: 02-marlow-boiler-options.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 1 revision(s)
+Summary: Reply to Victor Lindqvist. The writer was given totals only (per option: Option A: 80 on day 7, 120 on day 21: 1 order(s) delayed, 5 units short, 4 days late; Option B: all 200 on day 13: 1 order(s) delayed, 40 units short, 1 day late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 1 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hi Victor,
+
+Thanks for the heads-up on PO-5520. To confirm our understanding of the two options:
+
+Option A: 80 boilers on November 24, remaining 120 on December 8. This would leave us 5 units short and delay one order by 4 days.
+
+Option B: all 200 boilers on November 30. This would leave us 40 units short and delay one order by 1 day.
+
+We'll confirm our choice within three business days, as requested.
+
+Regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: REVISE
+REVISE
+
+1. None — numbers match facts.
+2. None.
+3. The draft is fine on this point (no customer named), but it reveals internal impact details ("delay one order by 4 days", "5 units short") which are totals-per-option, still allowed since they're not tied to an individual customer's order — acceptable.
+5. The draft implicitly asks the supplier to change the shipment split ("is any way to get more units into the first shipment") — this goes beyond acknowledging the options and edges toward negotiating a new option not in the facts. This should be removed, as it risks committing to/altering an option not presented, which is not something this draft should initiate without the decision-maker's input.
+6. Tone is otherwise fine (firm/cooperative).
+
+Change: Remove the final sentence asking the supplier to adjust the shipment split, since this requests a new option beyond what was offered and could be seen as agreeing to/negotiating a change without authorization (rule 5). Keep the draft to simply confirming receipt and timeline for decision.
+Draft 2: APPROVE
+APPROVE

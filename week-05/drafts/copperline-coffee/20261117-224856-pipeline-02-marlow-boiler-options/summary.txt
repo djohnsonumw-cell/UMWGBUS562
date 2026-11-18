@@ -1,0 +1,25 @@
+Coordinator: pipeline
+Email: 02-marlow-boiler-options.eml
+Subject: PO-5520 - BL-12 boilers - please choose a shipping option
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Marlow Metalworks cannot ship the full PO-5520 (200 BL-12 boilers) on the original day-7 date, and offers either a split shipment (80 on day 7, 120 on day 21) or a full shipment of 200 on day 13. Option A: 80 on day 7 + 120 on day 21: puts O-2205 at risk. Option B: 200 on day 13: puts O-2203 at risk.
+
+Drafts saved (1) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Victor Lindqvist. The writer was given totals only (per option: Option A: 80 on day 7 + 120 on day 21: 1 order(s) delayed, 5 units short, 4 days late; Option B: 200 on day 13: 1 order(s) delayed, 40 units short, 1 day late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (0):
+  - none
+
+Decisions for a person (2):
+  - Choose between Option A (delays order O-2205, 4 days late, penalty applies) and Option B (delays order O-2203, 1 day late, penalty applies) within three business days, or Marlow will default to Option B.
+  - Consider which late-penalty order is more costly/important to prioritize: O-2203 (Elm State University Dining, 40 units short, 1 day late) vs O-2205 (Tall Pines Coffee House, 5 units short, 4 days late).
+
+Total tokens: 14,172 (12,781 input + 1,391 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3        10,018            982
+supplier writer            1         1,255            209
+reviewer                   1         1,508            200
+Total                      5        12,781          1,391

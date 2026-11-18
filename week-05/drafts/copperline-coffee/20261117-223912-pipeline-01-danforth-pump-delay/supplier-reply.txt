@@ -1,0 +1,25 @@
+To: Diane Kessler <d.kessler@danforthpump.example>
+Subject: Re: PO-5512 - PU-20 pumps - partial shipment
+From: Purchasing, Copperline Coffee Machines
+In reply to: 01-danforth-pump-delay.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 0 revision(s)
+Summary: Reply to Diane Kessler. The writer was given totals only (3 order(s) delayed, 55 units short, 2-7 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Hello Diane,
+
+Thank you for the update on PO-5512. To confirm our understanding: 40 of the 200 PU-20 pumps will arrive on Saturday, November 21, 2026, as originally scheduled, with the remaining 160 units following on Sunday, December 6, 2026.
+
+This shortfall affects 3 of our orders, totaling 55 units short, with delays ranging from 2 to 7 days depending on the order. This is a meaningful impact on our side, so we'd appreciate anything you can do to bring forward part of the 160-unit balance, even a partial shipment ahead of December 6, to help reduce the delay.
+
+Regarding the customer order breakdown you requested, we're not able to share customer names or order details. We can tell you the shortfall affects 3 orders totaling 55 units if that's helpful for your planning.
+
+We appreciate your attention to this and look forward to hearing if any earlier partial delivery is possible.
+
+Purchasing, Copperline Coffee Machines
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE

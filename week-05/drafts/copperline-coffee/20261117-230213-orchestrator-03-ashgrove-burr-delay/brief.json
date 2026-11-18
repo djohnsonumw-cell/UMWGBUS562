@@ -1,0 +1,21 @@
+{
+  "part_id": "BR-64",
+  "what_changed": "PO-5531's 120 BR-64 burr sets will now arrive on day 13 instead of day 10, shipping as a single full-quantity shipment.",
+  "orders_at_risk": [],
+  "options": [],
+  "decisions_for_a_person": [],
+  "supplier_questions": [
+    "Priya Raman asked to be told if the 3-day delay causes any problems on Copperline's side."
+  ],
+  "slack": {
+    "part_id": "BR-64",
+    "extra_days": 1,
+    "first_order_affected": {
+      "order_id": "O-2207",
+      "customer": "Union Market Grocers",
+      "late_penalty": true,
+      "units_short": 20
+    },
+    "note": "The new BR-64 schedule can slip 1 more day with no order late. At 2 more days, O-2207 (Union Market Grocers, late penalty) would be 20 units short."
+  }
+}

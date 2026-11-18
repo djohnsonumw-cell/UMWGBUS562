@@ -1,0 +1,47 @@
+{
+  "part_id": "PU-20",
+  "what_changed": "Of the 200-unit PO-5512, only 40 pumps will arrive on day 4 as originally scheduled, with the remaining 160 delayed to day 19.",
+  "orders_at_risk": [
+    {
+      "order_id": "O-2203",
+      "customer": "Elm State University Dining",
+      "product": "Cafe One",
+      "quantity": 50,
+      "units_short": 10,
+      "ship_day": 12,
+      "ready_day": 19,
+      "days_late": 7,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-2204",
+      "customer": "Kettle & Crumb Bakery",
+      "product": "Cafe Duo",
+      "quantity": 10,
+      "units_short": 20,
+      "ship_day": 15,
+      "ready_day": 19,
+      "days_late": 4,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-2205",
+      "customer": "Tall Pines Coffee House",
+      "product": "Cafe One",
+      "quantity": 25,
+      "units_short": 25,
+      "ship_day": 17,
+      "ready_day": 19,
+      "days_late": 2,
+      "late_penalty": true
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide whether to expedite or source pumps elsewhere to protect O-2203 and O-2205, which carry late penalties and are now projected 7 and 2 days late respectively.",
+    "Decide how to handle O-2204, which would be 4 days late (no penalty, but delays bakery's order)."
+  ],
+  "supplier_questions": [
+    "Danforth Pump Works asked for a list of the customer orders these pumps are for, with each customer's name and quantity."
+  ]
+}
