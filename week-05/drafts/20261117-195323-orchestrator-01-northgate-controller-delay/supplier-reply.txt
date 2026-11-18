@@ -1,0 +1,32 @@
+To: Karen Walsh <k.walsh@northgatedrive.example>
+Subject: Re: PO-7781 - MC-500 controllers - revised shipment schedule
+From: Purchasing, Brookfield Bicycle Company
+In reply to: 01-northgate-controller-delay.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 1 revision(s)
+Status: draft only - not sent
+
+DRAFT
+Hello Karen,
+
+Thank you for the update on PO-7781. To confirm our understanding: instead of all 400 MC-500 controllers arriving on day 5 as scheduled, we will now receive 120 units on day 5, with the remaining 280 units arriving on day 26.
+
+This change will cause delays of 5-12 days on our side.
+
+We are not able to share details on our customers or their orders. If there is any way to ship additional units sooner than day 26, or to accelerate part of the remaining 280, that would help reduce the impact on our side. Please let us know what might be possible.
+
+Regarding other options, we will confirm by the time you requested this week.
+
+Thank you for your attention to this matter.
+
+Purchasing, Brookfield Bicycle Company
+
+REVIEW NOTES
+Draft 1: REVISE
+REVISE
+
+1. "90 units short" and "3 orders delayed by 9-12 days" are not in the facts/draft's own numbers correctly checked—actually these do follow from facts (total_units_short:90, orders_delayed:3, days_late_range 5-12, but draft says 9-12, which doesn't match the stated range of 5-12). Change "9-12 days" to "5-12 days" to match facts.
+
+3. The draft discusses internal order/customer impact details (units short, number of orders delayed, delay days) which describes Brookfield's own customer orders' impact to the supplier. Rule 3 says a draft to a supplier should not describe a customer's order. Remove the references to "90 units short" and "3 of our orders by X days" — keep only the acknowledgment of the schedule change and the request for expedited shipment, without detailing internal order impacts.
+Draft 2: APPROVE
+APPROVE

@@ -1,0 +1,28 @@
+To: Karen Walsh <k.walsh@northgatedrive.example>
+Subject: Re: PO-7781 - MC-500 controllers - revised shipment schedule
+From: Purchasing, Brookfield Bicycle Company
+In reply to: 01-northgate-controller-delay.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 1 revision(s)
+Status: draft only - not sent
+
+DRAFT
+Hello Karen,
+
+Thank you for letting us know. To confirm our understanding: of the 400 MC-500 controllers on PO-7781, 120 will ship on the original scheduled date (day 5), with the remaining 280 arriving on day 26.
+
+We're not able to share details on our customers or their orders.
+
+We are not in a position to confirm acceptance of this revised schedule at this time. If there is any way to ship more units sooner, or to expedite a portion of the 280-unit batch, that would help reduce the impact and we'd like to hear those options. We will confirm our decision with you as soon as possible.
+
+Thank you for your attention to this.
+
+Purchasing, Brookfield Bicycle Company
+
+REVIEW NOTES
+Draft 1: REVISE
+REVISE
+
+3. The draft describes internal customer order impact details (90 units short, 3 customer orders delayed by 5-12 days) to the supplier. This is Brookfield's own order/customer information being disclosed — remove the sentence "This shortfall leaves us 90 units short against our near-term needs and will delay 3 of our customer orders by 5 to 12 days."
+Draft 2: APPROVE
+APPROVE

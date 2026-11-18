@@ -1,0 +1,32 @@
+Coordinator: orchestrator
+Email: 01-northgate-controller-delay.eml
+Subject: PO-7781 - MC-500 controllers - revised shipment schedule
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Northgate Drive Systems notified that PO-7781 (400 MC-500 controllers) will ship in two parts: 120 on the original date, remaining 280 three weeks late. This affects 3 orders: O-1043 (City of Ashford Bike Share, 10 units short, 12 days late, carries a LATE PENALTY), O-1044 (Main Street Bikes, 30 units short, 8 days late), and O-1045 (Lakeview Rentals, 50 units short, 5 days late). Drafted and saved for review: a supplier reply to Karen Walsh identifying the affected customers and flagging the penalty situation, plus customer delay notices for all three orders. A person must review/approve the supplier reply and the O-1043 customer notice due to the late penalty, and should decide whether to pursue Karen's offer to discuss expediting or other options this week (e.g., partial stock reallocation) to mitigate the penalty exposure on O-1043.
+
+Drafts saved (4) - nothing was sent:
+  - supplier-reply.txt [supplier]: APPROVE after 1 revision(s)
+  - notice-O-1043.txt [customer]: APPROVE after 0 revision(s)
+  - notice-O-1044.txt [customer]: APPROVE after 0 revision(s)
+  - notice-O-1045.txt [customer]: APPROVE after 0 revision(s)
+
+Drafts marked for a person (2):
+  - supplier-reply.txt: an order with a late penalty is affected
+  - notice-O-1043.txt: an order with a late penalty is affected
+
+Decisions for a person (3):
+  - Decide how to handle the 9-12 day delay for City of Ashford Bike Share's order (O-1043), which carries a late penalty.
+  - Decide whether to expedite, partially reallocate stock, or negotiate an earlier partial delivery from Northgate for O-1044 and O-1045.
+  - Consider whether to take up Karen Walsh's offer to discuss alternative options this week, given three orders will now ship late.
+
+Total tokens: 27,392 (23,733 input + 3,659 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         7,067            698
+supply analyst             3         8,958            872
+supplier writer            2         2,429            666
+reviewer                   5         4,198            910
+customer writer            3         1,081            513
+Total                     16        23,733          3,659

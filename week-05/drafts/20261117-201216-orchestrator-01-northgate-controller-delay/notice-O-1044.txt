@@ -1,0 +1,26 @@
+To: Main Street Bikes <owner@mainstreetbikes.example>
+Subject: Update on your Brookfield order O-1044
+From: Customer Service, Brookfield Bicycle Company
+Needs a person: no
+Review: APPROVE after 0 revision(s)
+Summary: Notice to Main Street Bikes about order O-1044 (30 Cargo E), 8 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+Status: draft only - not sent
+
+DRAFT
+Subject: Update on Your Order O-1044
+
+Dear Main Street Bikes,
+
+We are writing to update you on the status of your order, O-1044, for 30 units of the Cargo E model.
+
+We're sorry to let you know that this order is now expected to ship 8 days later than originally planned. The delay is due to a delay in a part from one of our suppliers.
+
+We understand the inconvenience this may cause and appreciate your patience. If you have any questions in the meantime, please don't hesitate to reach out.
+
+Thank you for your understanding.
+
+Customer Service, Brookfield Bicycle Company
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE

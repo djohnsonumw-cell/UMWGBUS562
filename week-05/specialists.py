@@ -165,6 +165,25 @@ def check_brief(text, coverage_results):
         if reported != expected:
             raise BriefError("orders_at_risk must list exactly the orders at risk in your last "
                              f"check_coverage result: {', '.join(sorted(expected)) or 'none'}.")
+
+    # The free-text fields may mention only orders (and their customers) that are at risk,
+    # in orders_at_risk or under one of the options.
+    at_risk_ids = {o["order_id"] for o in checked}
+    for option in brief["options"]:
+        at_risk_ids |= {str(i).strip() for i in option["order_ids"]}
+    stray = set()
+    for row in read_csv("orders.csv"):
+        if row["order_id"] in at_risk_ids:
+            continue
+        for key in ("what_changed", "decisions_for_a_person", "supplier_questions"):
+            texts = brief[key] if isinstance(brief[key], list) else [brief[key]]
+            for text in texts:
+                found = find_names(str(text), [row["customer"]])
+                if found or re.search(rf"\b{re.escape(row['order_id'])}\b", str(text)):
+                    stray.add(f"{row['customer']} ({row['order_id']}) in {key}")
+    if stray:
+        raise BriefError("These customers' orders are not at risk, so don't mention them: "
+                         + "; ".join(sorted(stray)) + ".")
     return brief
 
 
@@ -438,7 +457,33 @@ def reviewed_draft(writer, write, facts, recipient, label, late_penalty=False, *
     print(f"[code check] {label}: " + ("names check failed - " + ", ".join(leaks)
                                        if leaks else "names check passed"))
     return {"draft": draft, "verdict": result["verdict"], "revisions": revisions,
-            "notes": notes, "needs_person": bool(reasons), "reasons": reasons}
+            "notes": notes, "needs_person": bool(reasons), "reasons": reasons, "leaks": leaks}
+
+
+def draft_summary(recipient, facts, outcome, to):
+    """A short summary of a draft, built in code from what its writer was given and from
+    the checks, so whoever reads it (the orchestrator, a person) can't be misled."""
+    review_part = (f"reviewer: {outcome['verdict']} after {outcome['revisions']} revision(s)")
+    if recipient == "supplier":
+        if "orders_delayed" in facts:
+            days = facts["days_late_range"]
+            impact = (f"{facts['orders_delayed']} order(s) delayed, "
+                      f"{facts['total_units_short']} units short"
+                      + (f", {days[0]}-{days[1]} days late" if days else ""))
+            if facts["options"]:
+                impact += f"; {len(facts['options'])} supplier option(s) compared"
+        else:
+            impact = "no supply analysis"
+        check = ("names a customer: " + ", ".join(outcome["leaks"]) if outcome["leaks"]
+                 else "names no customer")
+        return (f"Reply to {to}. The writer was given totals only ({impact}), with no customer "
+                f"names or order numbers. Code check: {check}; {review_part}.")
+    days = facts["days_later_than_planned"]
+    check = ("names a supplier: " + ", ".join(outcome["leaks"]) if outcome["leaks"]
+             else "names no supplier")
+    return (f"Notice to {facts['customer']} about order {facts['order_id']} "
+            f"({facts['quantity']} {facts['model']}), {days} days later than planned. The "
+            f"writer was given only this order's facts. Code check: {check}; {review_part}.")
 
 
 # ---------------------------------------------------------------------------
@@ -471,14 +516,16 @@ class TeamRun:
             handoff(ANALYST, self.coordinator, "brief", self.brief)
         return self.brief
 
-    def save_draft(self, filename, header, outcome, recipient):
+    def save_draft(self, filename, header, outcome, recipient, summary):
         flag = ("YES - " + "; ".join(outcome["reasons"])) if outcome["needs_person"] else "no"
         status = (f"{outcome['verdict']} after {outcome['revisions']} revision(s)")
         body = "\n".join(header + [
-            f"Needs a person: {flag}", f"Review: {status}", "Status: draft only - not sent",
+            f"Needs a person: {flag}", f"Review: {status}", f"Summary: {summary}",
+            "Status: draft only - not sent",
             "", "DRAFT", outcome["draft"], "", "REVIEW NOTES", *outcome["notes"]]) + "\n"
         (self.run_dir / filename).write_text(body, encoding="utf-8")
         record = {"file": filename, "recipient": recipient, "status": status,
+                  "summary": summary,
                   "needs_person": outcome["needs_person"], "reasons": outcome["reasons"],
                   "saved_to": str((self.run_dir / filename).relative_to(REPO))}
         self.drafts.append(record)
@@ -504,7 +551,9 @@ class TeamRun:
             f"To: {self.email['from_name']} <{self.email['sender']}>",
             f"Subject: {reply_subject(self.email['subject'])}",
             "From: Purchasing, Brookfield Bicycle Company",
-            f"In reply to: {self.email['path'].name}"], outcome, "supplier")
+            f"In reply to: {self.email['path'].name}"], outcome, "supplier",
+            draft_summary("supplier", supplier_brief(self.brief), outcome,
+                          self.email["from_name"] or self.email["sender"]))
 
     def customer_notice(self, order_id):
         order_id = str(order_id).strip().upper()
@@ -537,7 +586,8 @@ class TeamRun:
         return self.save_draft(f"notice-{order_id}.txt", [
             f"To: {row['customer']} <{row['contact_email']}>",
             f"Subject: Update on your Brookfield order {order_id}",
-            "From: Customer Service, Brookfield Bicycle Company"], outcome, "customer")
+            "From: Customer Service, Brookfield Bicycle Company"], outcome, "customer",
+            draft_summary("customer", customer_facts(order), outcome, row["customer"]))
 
     def result_lines(self):
         """The end-of-run summary: drafts saved, drafts marked for a person, decisions for
@@ -547,7 +597,7 @@ class TeamRun:
         decisions = (self.brief or {}).get("decisions_for_a_person", [])
         tin, tout = self.usage.totals()
         lines = [f"Drafts saved ({len(saved)}) - nothing was sent:"]
-        lines += [f"  - {d['file']} [{d['recipient']}]: {d['status']}" for d in saved] or ["  - none"]
+        lines += [f"  - {d['file']} [{d['recipient']}]: {d['summary']}" for d in saved] or ["  - none"]
         lines += ["", f"Drafts marked for a person ({len(marked)}):"]
         lines += [f"  - {d['file']}: {'; '.join(d['reasons'])}" for d in marked] or ["  - none"]
         lines += ["", f"Decisions for a person ({len(decisions)}):"]

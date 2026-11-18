@@ -1,0 +1,32 @@
+Coordinator: orchestrator
+Email: 01-northgate-controller-delay.eml
+Subject: PO-7781 - MC-500 controllers - revised shipment schedule
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+Northgate Drive Systems reported a shortfall on PO-7781 (MC-500 controllers): only 120 of 400 will arrive on schedule (day 5), with the remaining 280 delayed 3 weeks (day 26). This affects 3 customer orders: O-1043 (City of Ashford Bike Share, 100 Commuter E, 12 days late, carries a late penalty), O-1044 (Main Street Bikes, 30 Cargo E, 8 days late), and O-1045 (Lakeview Rentals, 50 Commuter E, 5 days late). Supplier offered no alternative options and asked which customers are most affected; a reply draft (sharing only aggregate impact, no customer names) is ready for review. Customer notice drafts are ready for all three affected orders. Because O-1043 involves a late penalty and no expedite options were offered, a person should decide whether to accept the revised schedule or pursue alternative sourcing/expediting with the supplier before replying, and review the O-1043 notice before sending.
+
+Drafts saved (4) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Karen Walsh. The writer was given totals only (3 order(s) delayed, 90 units short, 5-12 days late), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+  - notice-O-1043.txt [customer]: Notice to City of Ashford Bike Share about order O-1043 (100 Commuter E), 12 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-1044.txt [customer]: Notice to Main Street Bikes about order O-1044 (30 Cargo E), 8 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+  - notice-O-1045.txt [customer]: Notice to Lakeview Rentals about order O-1045 (50 Commuter E), 5 days later than planned. The writer was given only this order's facts. Code check: names no supplier; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (2):
+  - supplier-reply.txt: an order with a late penalty is affected
+  - notice-O-1043.txt: an order with a late penalty is affected
+
+Decisions for a person (3):
+  - Decide whether to accept the revised 120/day-5 + 280/day-26 schedule or pursue alternative sourcing/expediting with Northgate, given that O-1043 (penalty-bearing, 100 bikes for City of Ashford Bike Share) would ship 12 days late.
+  - Consider whether to discuss expedite options with Karen Walsh this week, as she offered, to reduce the delay for the penalty order O-1043 and the other two affected orders.
+  - Decide how to communicate the delay to Blue Ridge Bike Shop, City of Ashford Bike Share, Main Street Bikes, and Lakeview Rentals.
+
+Total tokens: 24,348 (21,508 input + 2,840 output)
+
+Agent              API calls  Input tokens  Output tokens
+orchestrator               3         7,603            634
+supply analyst             3         8,834            834
+supplier writer            1           955            246
+reviewer                   4         3,035            606
+customer writer            3         1,081            520
+Total                     14        21,508          2,840

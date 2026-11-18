@@ -1,0 +1,48 @@
+{
+  "part_id": "MC-500",
+  "what_changed": "Instead of all 400 controllers arriving on day 5, only 120 will arrive on day 5 and the remaining 280 will arrive on day 26 (three weeks later).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1043",
+      "customer": "City of Ashford Bike Share",
+      "model": "Commuter E",
+      "bikes": 100,
+      "units_short": 10,
+      "ship_day": 14,
+      "ready_day": 26,
+      "days_late": 12,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-1044",
+      "customer": "Main Street Bikes",
+      "model": "Cargo E",
+      "bikes": 30,
+      "units_short": 30,
+      "ship_day": 18,
+      "ready_day": 26,
+      "days_late": 8,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1045",
+      "customer": "Lakeview Rentals",
+      "model": "Commuter E",
+      "bikes": 50,
+      "units_short": 50,
+      "ship_day": 21,
+      "ready_day": 26,
+      "days_late": 5,
+      "late_penalty": false
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide how to handle the 9-12 day delay for City of Ashford Bike Share's order (O-1043), which carries a late penalty.",
+    "Decide whether to expedite, partially reallocate stock, or negotiate an earlier partial delivery from Northgate for O-1044 and O-1045.",
+    "Consider whether to take up Karen Walsh's offer to discuss alternative options this week, given three orders will now ship late."
+  ],
+  "supplier_questions": [
+    "Karen Walsh asked which customers are most affected by the delay, so Northgate can understand the impact."
+  ]
+}

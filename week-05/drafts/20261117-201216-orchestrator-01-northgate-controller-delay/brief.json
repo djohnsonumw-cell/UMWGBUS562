@@ -1,0 +1,48 @@
+{
+  "part_id": "MC-500",
+  "what_changed": "Of the 400 controllers on PO-7781 due day 5, only 120 will arrive on day 5; the remaining 280 will now arrive on day 26 (three weeks later).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1043",
+      "customer": "City of Ashford Bike Share",
+      "model": "Commuter E",
+      "bikes": 100,
+      "units_short": 10,
+      "ship_day": 14,
+      "ready_day": 26,
+      "days_late": 12,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-1044",
+      "customer": "Main Street Bikes",
+      "model": "Cargo E",
+      "bikes": 30,
+      "units_short": 30,
+      "ship_day": 18,
+      "ready_day": 26,
+      "days_late": 8,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1045",
+      "customer": "Lakeview Rentals",
+      "model": "Commuter E",
+      "bikes": 50,
+      "units_short": 50,
+      "ship_day": 21,
+      "ready_day": 26,
+      "days_late": 5,
+      "late_penalty": false
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide whether to accept the revised 120/day-5 + 280/day-26 schedule or pursue alternative sourcing/expediting with Northgate, given that O-1043 (penalty-bearing, 100 bikes for City of Ashford Bike Share) would ship 12 days late.",
+    "Consider whether to discuss expedite options with Karen Walsh this week, as she offered, to reduce the delay for the penalty order O-1043 and the other two affected orders.",
+    "Decide how to communicate the delay to Blue Ridge Bike Shop, City of Ashford Bike Share, Main Street Bikes, and Lakeview Rentals."
+  ],
+  "supplier_questions": [
+    "Which of your customers are most affected by this delay?"
+  ]
+}
