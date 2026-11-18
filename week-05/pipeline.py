@@ -1,48 +1,62 @@
 """Coordinator 1: a fixed pipeline for one supplier email.
 
-The steps are written in code and run the same way for every email:
+The specialists from specialists.py run in the same order for every email:
   1. the supply analyst writes its brief (with the supply MCP server's tools);
-  2. the supplier writer drafts a reply, and the reviewer checks it;
-  3. for each order at risk, the customer writer drafts a notice, and the reviewer
-     checks it (skipped when the supplier offers options: a person decides first);
-  4. code writes the summary for the purchasing manager.
-Drafts are saved in week-05/drafts/<run>/. Nothing is sent.
+  2. a customer notice for each order at risk (skipped if there are none). Each notice
+     goes through the review step;
+  3. a reply to the supplier, which also goes through the review step.
+At the end it prints a summary: drafts saved, drafts marked for a person, decisions for
+a person, and total tokens. Drafts are saved in week-05/drafts/<run>/. Nothing is sent.
+
+If the supplier offers options, the notices are still drafted, but each one is marked
+for a person: whether that order is late depends on the option a person chooses.
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-05\\pipeline.py --email week-05\\brookfield-bikes\\supplier-emails\\01-northgate-controller-delay.eml
-    ... --save week-05\\runs\\pipeline-01.txt     (also save the output)
+    ... --save week-05\\runs\\pipeline-01.txt     (also write everything printed to that file)
 """
 
+from common import RULE
 from specialists import run_coordinator
 
 
 def summarize(brief):
-    risk = brief["orders_at_risk"]
+    """A short summary for the purchasing manager, built in code from the brief."""
     parts = [brief["what_changed"]]
     if brief["options"]:
         for o in brief["options"]:
             ids = ", ".join(o["order_ids"]) or "no orders"
             parts.append(f"{o.get('name')}: puts {ids} at risk.")
-        parts.append("No customer notices were drafted, because which orders are late depends "
-                     "on the option chosen.")
-    elif risk:
+    elif brief["orders_at_risk"]:
         parts.append("Orders at risk: " + "; ".join(
             f"{o['order_id']} ({o['customer']}), {o['units_short']} units short, "
             f"{o['days_late'] if o['days_late'] is not None else 'unknown'} days late"
-            f"{', LATE PENALTY' if o['late_penalty'] else ''}" for o in risk) + ".")
+            f"{', LATE PENALTY' if o['late_penalty'] else ''}"
+            for o in brief["orders_at_risk"]) + ".")
     else:
         parts.append("No customer orders are at risk.")
-    for d in brief["decisions_for_a_person"]:
-        parts.append(f"Decision needed: {d}")
     return " ".join(parts)
 
 
 async def coordinate(team):
+    # Step 1: the supply analyst.
+    print(f"{RULE}\nSTEP 1 of 3: supply analyst\n{RULE}")
     brief = await team.analyst()
-    team.supplier_reply()
-    if not brief["options"]:
+
+    # Step 2: a customer notice for each order at risk.
+    print(f"{RULE}\nSTEP 2 of 3: customer notices\n{RULE}")
+    if not brief["orders_at_risk"]:
+        print("Skipped: no orders are at risk.")
+    else:
+        if brief["options"]:
+            print("The supplier offered options: each notice will be marked for a person.")
         for order in brief["orders_at_risk"]:
             team.customer_notice(order["order_id"])
+
+    # Step 3: a reply to the supplier.
+    print(f"{RULE}\nSTEP 3 of 3: supplier reply\n{RULE}")
+    team.supplier_reply()
+
     team.finish(summarize(brief),
                 needs_decision=bool(brief["decisions_for_a_person"] or brief["options"]))
 

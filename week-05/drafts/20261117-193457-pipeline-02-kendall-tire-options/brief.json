@@ -1,0 +1,36 @@
+{
+  "part_id": "TR-29",
+  "what_changed": "PO-7795 (400 TR-29 tires, originally due day 8) will now ship either as 160 on day 8 plus 240 on day 22 (Option 1), or all 400 together on day 12 (Option 2, the default if no reply).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1046",
+      "customer": "Hilltop Outfitters",
+      "model": "Trail 29",
+      "bikes": 80,
+      "units_short": 40,
+      "ship_day": 9,
+      "ready_day": 12,
+      "days_late": 3,
+      "late_penalty": false
+    }
+  ],
+  "options": [
+    {
+      "name": "Option 1: 160 on day 8, 240 on day 22",
+      "order_ids": []
+    },
+    {
+      "name": "Option 2: all 400 on day 12",
+      "order_ids": [
+        "O-1046"
+      ]
+    }
+  ],
+  "decisions_for_a_person": [
+    "Choose between Option 1 (split shipment, no orders at risk) and Option 2 (single shipment on day 12, which makes order O-1046 for Hilltop Outfitters 40 units short and 3 days late \u2014 no late penalty applies, but it is a delay).",
+    "Reply to Lisa Moreno within two business days, otherwise the supplier will default to Option 2."
+  ],
+  "supplier_questions": [
+    "Which option (1 or 2) does Brookfield prefer for PO-7795?"
+  ]
+}

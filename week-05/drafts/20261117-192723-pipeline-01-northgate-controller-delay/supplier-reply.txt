@@ -1,0 +1,33 @@
+To: Karen Walsh <k.walsh@northgatedrive.example>
+Subject: Re: PO-7781 - MC-500 controllers - revised shipment schedule
+From: Purchasing, Brookfield Bicycle Company
+In reply to: 01-northgate-controller-delay.eml
+Needs a person: YES - an order with a late penalty is affected
+Review: APPROVE after 0 revision(s)
+Status: draft only - not sent
+
+DRAFT
+Hello Karen,
+
+Thank you for the update on PO-7781. To confirm our understanding: 120 of the 400 MC-500 controllers will ship on the original schedule (day 5), with the remaining 280 units now delayed until day 26, three weeks later.
+
+This shortfall affects 90 units in total and will delay 3 of our downstream orders, with delays ranging from 5 to 12 days depending on the order. We are not able to share details on which customers or orders are affected.
+
+As requested, we are not able to confirm any of the options discussed at this time; we will let you know our decision by the end of this week, as you suggested.
+
+In the meantime, please let us know if there is any way to ship more of the 280 units sooner, or to partially expedite the order, as that would help reduce the impact on our side.
+
+Best regards,
+
+Purchasing
+Brookfield Bicycle Company
+
+REVIEW NOTES
+Draft 1: APPROVE
+APPROVE
+
+Wait — reviewing more carefully:
+
+REVISE
+
+2. The line "we will let you know our decision by the end of this week" introduces a commitment/date that is not supported by the facts (the brief contains no such deadline). Remove this promise or rephrase as a general intent without a specific date (e.g., "we will follow up soon").

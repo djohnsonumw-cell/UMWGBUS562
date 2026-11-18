@@ -1,0 +1,27 @@
+Coordinator: pipeline
+Email: 02-kendall-tire-options.eml
+Subject: PO-7795 - TR-29 tires - two options, please choose
+A person needs to make a decision: yes
+
+SUMMARY FOR THE PURCHASING MANAGER
+PO-7795 (400 TR-29 tires, originally due day 8) will now ship either as 160 on day 8 plus 240 on day 22 (Option 1), or all 400 together on day 12 (Option 2, the default if no reply). Option 1: 160 on day 8, 240 on day 22: puts no orders at risk. Option 2: all 400 on day 12: puts O-1046 at risk.
+
+Drafts saved (2) - nothing was sent:
+  - notice-O-1046.txt [customer]: APPROVE after 0 revision(s)
+  - supplier-reply.txt [supplier]: APPROVE after 0 revision(s)
+
+Drafts marked for a person (1):
+  - notice-O-1046.txt: depends on which option is chosen (late only under Option 2: all 400 on day 12; the notice uses the analyst's numbers for that case)
+
+Decisions for a person (2):
+  - Choose between Option 1 (split shipment, no orders at risk) and Option 2 (single shipment on day 12, which makes order O-1046 for Hilltop Outfitters 40 units short and 3 days late — no late penalty applies, but it is a delay).
+  - Reply to Lisa Moreno within two business days, otherwise the supplier will default to Option 2.
+
+Total tokens: 18,326 (16,281 input + 2,045 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             4        12,965          1,379
+customer writer            1           361            201
+reviewer                   2         1,933            209
+supplier writer            1         1,022            256
+Total                      8        16,281          2,045

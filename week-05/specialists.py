@@ -1,24 +1,29 @@
-"""The four specialists, and the shared state of one job (TeamRun).
+"""The four specialists both coordinators share, and the review step around the writers.
 
-Both coordinators (pipeline.py and orchestrator.py) use the same TeamRun, so the
-specialists behave the same way whichever coordinator calls them:
+Specialists (all on claude-sonnet-5; each reads its system prompt from
+brookfield-bikes/prompts/ every time it runs, so prompt edits take effect right away):
 
-- analyst(): the supply analyst, a Claude agent with the supply MCP server's tools.
-  Its brief is checked in code: every order it reports must match a check_coverage
-  result, so no number in the brief can come from anywhere but the tools.
-- supplier_reply() and customer_notice(order_id): a writer drafts, then the reviewer
-  checks the draft. One rewrite is allowed after REVISE. Every draft is saved to a
-  run folder in week-05/drafts/ for a person to check. Nothing is ever sent.
+- run_analyst(email): the supply analyst, an agent with the tools of
+  supply_mcp_server.py. It may make at most 10 tool calls in total; after the 10th it
+  must finish without tools. Returns its brief (a JSON object), which code checks
+  against the check_coverage results, so every number in it came from the tools.
+- write_supplier_reply(email, brief): one model call. All customer names (and their
+  order numbers and contact addresses) are removed from what it sees first.
+- write_customer_notice(order): one model call, given only that one order's facts.
+- review(draft, facts, recipient): one model call. Returns APPROVE or REVISE with reasons.
 
-Rules enforced here in code, not left to the prompts:
-- The supplier writer never sees customer names or order numbers: it gets totals only.
-- The customer writer gets one order's facts, built from orders.csv and the checked
-  brief, with no supplier and no penalty. The recipient address is added by code.
-- No customer notices when the supplier offers options: which orders are late depends
-  on a choice a person has to make first.
-- Before review, code scans each draft for names and order numbers its reader must
-  not see (customers in supplier replies; suppliers, other customers, and penalties
-  in customer notices).
+reviewed_draft() is the review step: a writer drafts, the reviewer checks, and the writer
+revises at most 2 times. Then code checks the final draft: no customer name in a
+supplier draft, and no supplier name in a customer draft. A draft is marked for a person
+if the reviewer didn't approve it, the code check failed, or its order has a late
+penalty. A customer notice is also marked when the supplier offered options, since
+whether that order is late depends on the option a person chooses. Drafts are saved in week-05/drafts/<run>/. Nothing is ever sent.
+
+Every handoff between the coordinator and a specialist, or between two specialists, is
+printed, along with the tokens each specialist call used. The API key is read at run
+time (common.load_api_key) and never written anywhere.
+
+TeamRun holds one job's state for the coordinators (pipeline.py and orchestrator.py).
 """
 
 import argparse
@@ -33,19 +38,24 @@ import anthropic
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from common import (DATA_DIR, DRAFTS_DIR, HERE, REPO, RULE, Tee, Usage, email_block,
-                    load_api_key, parse_email, preview, read_prompt, reply_subject,
-                    run_tool_loop, single_turn)
+from common import (DRAFTS_DIR, HERE, REPO, RULE, STOP_REASONS, Tee, Usage, ask_claude,
+                    email_block, load_api_key, parse_email, read_prompt, reply_subject,
+                    response_text, single_turn, preview)
 from supply_mcp_server import read_csv
 
+SPECIALIST_MODEL = "claude-sonnet-5"
 SERVER_SCRIPT = HERE / "supply_mcp_server.py"
 SERVER_LOG = HERE / "mcp_server.log"  # *.log is git-ignored
-ANALYST_MAX_TOOL_CALLS = 10
-ANALYST_ATTEMPTS = 2   # one retry if the brief fails the checks
-WRITE_ROUNDS = 2       # first draft + one rewrite after REVISE
+ANALYST_MAX_TOOL_CALLS = 10   # in total, for the whole analyst run
+ANALYST_ATTEMPTS = 2          # one retry (without more tool calls than the limit) if the brief fails the checks
+MAX_REVISIONS = 2             # a draft is revised at most twice after REVISE
 NO_REPLY = "NO REPLY NEEDED"
 BRIEF_FIELDS = ["part_id", "what_changed", "orders_at_risk", "options",
                 "decisions_for_a_person", "supplier_questions"]
+HANDOFF_CHARS = 2500          # how much of each handoff's contents to print
+
+ANALYST, SUPPLIER_WRITER, CUSTOMER_WRITER, REVIEWER = (
+    "supply analyst", "supplier writer", "customer writer", "reviewer")
 
 
 class BriefError(ValueError):
@@ -53,7 +63,46 @@ class BriefError(ValueError):
 
 
 # ---------------------------------------------------------------------------
-# Checking the analyst's brief
+# Shared client, token counts, and handoff printing
+# ---------------------------------------------------------------------------
+
+_default = {"client": None, "usage": Usage()}
+
+
+def _ctx(client, usage):
+    """The client and Usage to use: the caller's, or this module's own."""
+    if client is None:
+        if _default["client"] is None:
+            _default["client"] = anthropic.Anthropic(api_key=load_api_key())
+        client = _default["client"]
+    return client, (usage if usage is not None else _default["usage"])
+
+
+def handoff(sender, receiver, what, payload=None):
+    print(f"\n>>> HANDOFF: {sender} -> {receiver}: {what}")
+    if payload is not None:
+        text = payload if isinstance(payload, str) else json.dumps(payload, indent=2)
+        print("    " + preview(text, HANDOFF_CHARS).replace("\n", "\n    "))
+
+
+def _print_tokens(agent, response):
+    u = response.usage
+    print(f"    [{agent}] tokens this call: {u.input_tokens:,} in, {u.output_tokens:,} out")
+
+
+def _one_call(client, usage, agent, prompt_name, user_text):
+    """One model call for a writer or the reviewer. Returns the text."""
+    messages = [{"role": "user", "content": user_text}]
+    response = ask_claude(client, usage, agent, read_prompt(prompt_name), messages,
+                          model=SPECIALIST_MODEL)
+    _print_tokens(agent, response)
+    if response.stop_reason != "end_turn":
+        raise RuntimeError(f"{agent} {STOP_REASONS.get(response.stop_reason, response.stop_reason)}.")
+    return response_text(response)
+
+
+# ---------------------------------------------------------------------------
+# Specialist 1: the supply analyst
 # ---------------------------------------------------------------------------
 
 def parse_json_object(text):
@@ -119,244 +168,6 @@ def check_brief(text, coverage_results):
     return brief
 
 
-# ---------------------------------------------------------------------------
-# Draft checks done in code
-# ---------------------------------------------------------------------------
-
-def find_leaks(text, forbidden):
-    lowered = text.lower()
-    return sorted({term for term in forbidden if term and term.lower() in lowered})
-
-
-def first_word(review):
-    for line in review.splitlines():
-        line = line.strip().strip("*").strip().upper()
-        if line:
-            return "APPROVE" if line.startswith("APPROVE") else (
-                "REVISE" if line.startswith("REVISE") else "UNCLEAR")
-    return "UNCLEAR"
-
-
-# ---------------------------------------------------------------------------
-# One job
-# ---------------------------------------------------------------------------
-
-class TeamRun:
-    def __init__(self, client, email, coordinator):
-        self.client = client
-        self.email = email
-        self.coordinator = coordinator
-        self.usage = Usage()
-        self.brief = None
-        self.analyst_runs = 0
-        self.supplier_done = False
-        self.drafts = []      # (file name or None, status, recipient)
-        self.summary = None
-        self.needs_decision = None
-        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        self.run_dir = DRAFTS_DIR / f"{stamp}-{coordinator}-{email['path'].stem}"
-        self.run_dir.mkdir(parents=True, exist_ok=True)
-        self.orders = {o["order_id"]: o for o in read_csv("orders.csv")}
-        self.suppliers = read_csv("suppliers.csv")
-
-    # ----- supply analyst -------------------------------------------------
-
-    async def analyst(self):
-        """Run the supply analyst. Returns the checked brief (also saved as brief.json)."""
-        if self.brief is not None:
-            return self.brief
-        self.analyst_runs += 1
-        system = read_prompt("analyst")
-        coverage_results = []
-        server = StdioServerParameters(command=sys.executable, args=[str(SERVER_SCRIPT)],
-                                       cwd=str(REPO))
-        print(f"{RULE}\nSupply analyst (MCP server: {SERVER_SCRIPT.name})\n{RULE}")
-        with open(SERVER_LOG, "a", encoding="utf-8") as errlog:
-            async with stdio_client(server, errlog=errlog) as (read, write):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
-                    mcp_tools = (await session.list_tools()).tools
-                    tools = [{"name": t.name, "description": t.description or "",
-                              "input_schema": t.input_schema} for t in mcp_tools]
-                    names = {t["name"] for t in tools}
-
-                    async def handle(name, args):
-                        if name not in names:
-                            return f"Unknown tool: {name}", True
-                        text, is_error = await call_mcp_tool(session, name, args)
-                        if name == "check_coverage" and not is_error:
-                            coverage_results.append(json.loads(text))
-                        return text, is_error
-
-                    messages = [{"role": "user", "content": (
-                        "Days are counted from today (day 0). Prepare your brief for this "
-                        f"supplier email.\n\n{email_block(self.email)}")}]
-                    for attempt in range(1, ANALYST_ATTEMPTS + 1):
-                        text, stop = await run_tool_loop(
-                            self.client, self.usage, "supply analyst", system, tools, messages,
-                            handle, ANALYST_MAX_TOOL_CALLS)
-                        print(f"[supply analyst] {stop}.")
-                        try:
-                            brief = check_brief(text, coverage_results)
-                            break
-                        except BriefError as exc:
-                            print(f"[supply analyst] brief rejected by code check: {exc}\n")
-                            if attempt == ANALYST_ATTEMPTS:
-                                raise RuntimeError(f"The analyst's brief failed the checks: {exc}")
-                            messages.append({"role": "user", "content": (
-                                f"Your brief failed a check: {exc} Fix it, using tools if you "
-                                "need to, and finish with only the corrected JSON brief.")})
-        self.brief = brief
-        (self.run_dir / "brief.json").write_text(json.dumps(brief, indent=2), encoding="utf-8")
-        print(f"Brief:\n{json.dumps(brief, indent=2)}\n")
-        return brief
-
-    # ----- facts each writer may see --------------------------------------
-
-    def supplier_facts(self):
-        if self.brief is None:
-            return {"note": "No supply analysis was run for this email."}
-        b = self.brief
-        late = [o["days_late"] for o in b["orders_at_risk"] if o["days_late"] is not None]
-        return {
-            "part_id": b["part_id"],
-            "what_changed": b["what_changed"],
-            "orders_delayed": len(b["orders_at_risk"]),
-            "total_units_short": sum(o["units_short"] for o in b["orders_at_risk"]),
-            "days_late_range": [min(late), max(late)] if late else None,
-            "options": [{"name": o.get("name"), "orders_delayed": len(o["order_ids"])}
-                        for o in b["options"]],
-            "decisions_for_a_person": b["decisions_for_a_person"],
-            "supplier_questions": b["supplier_questions"],
-        }
-
-    def customer_facts(self, entry):
-        row = self.orders[entry["order_id"]]
-        return {
-            "customer": row["customer"],
-            "order_id": entry["order_id"],
-            "model": row["model"],
-            "quantity": int(row["qty"]),
-            "planned_ship_in_days": entry["ship_day"],
-            "days_later_than_planned": (entry["days_late"] if entry["days_late"] is not None
-                                        else "not yet known"),
-        }
-
-    # ----- writer + reviewer ----------------------------------------------
-
-    def write_and_review(self, writer, writer_input, facts, audience, forbidden, label):
-        """Draft, check in code, review; one rewrite after REVISE. Returns (text, status, notes).
-        facts is the text the reviewer checks the draft against: what the writer was given."""
-        writer_system, reviewer_system = read_prompt(writer), read_prompt("reviewer")
-        messages = [{"role": "user", "content": (
-            f"{writer_input}\n\nWrite only the body of the email, ready for a person to check "
-            "and send, with no notes before or after it.")}]
-        notes = []
-        for round_no in range(1, WRITE_ROUNDS + 1):
-            draft = single_turn(self.client, self.usage, writer, writer_system, messages)
-            print(f"[{writer}] draft {round_no} for {label}:\n{preview(draft, 600)}\n")
-            if draft.strip().upper() == NO_REPLY:
-                return NO_REPLY, "no reply needed", notes
-            leaks = find_leaks(draft, forbidden)
-            if leaks:
-                verdict = "REVISE"
-                feedback = ("Code check: the draft must not mention " + ", ".join(leaks) +
-                            ". Remove every mention.")
-            else:
-                review = single_turn(self.client, self.usage, "reviewer", reviewer_system, [{
-                    "role": "user", "content": (
-                        f"Recipient: {audience}\n\n<facts>\n{facts}\n</facts>"
-                        f"\n\n<draft>\n{draft}\n</draft>")}])
-                verdict, feedback = first_word(review), review
-            print(f"[reviewer] round {round_no}: {verdict}\n{preview(feedback, 600)}\n")
-            notes.append(f"Round {round_no}: {verdict}\n{feedback}")
-            if verdict == "APPROVE":
-                return draft, "approved" if round_no == 1 else "approved after one revision", notes
-            if round_no < WRITE_ROUNDS:
-                messages.append({"role": "user", "content": (
-                    f"A reviewer asked for changes:\n\n{feedback}\n\nWrite the full revised "
-                    "draft. Output only the email itself, with no notes to the reviewer.")})
-        return draft, "NOT APPROVED - a person must fix this draft before using it", notes
-
-    def save_draft(self, filename, header, text, status, notes, recipient):
-        body = "\n".join(header + [f"Review: {status}", "Status: draft only - not sent",
-                                   "", "DRAFT", text, "", "REVIEW NOTES", *notes]) + "\n"
-        (self.run_dir / filename).write_text(body, encoding="utf-8")
-        self.drafts.append((filename, status, recipient))
-        return self.run_dir / filename
-
-    # ----- supplier reply ---------------------------------------------------
-
-    def supplier_reply(self):
-        if self.supplier_done:
-            raise ValueError("A supplier reply was already drafted for this email.")
-        self.supplier_done = True
-        facts = self.supplier_facts()
-        forbidden = set()
-        for row in self.orders.values():
-            forbidden |= {row["customer"], row["order_id"], row["contact_email"]}
-        print(f"{RULE}\nSupplier reply\n{RULE}")
-        # The reviewer sees exactly what the writer saw: the supplier's email and the brief.
-        writer_input = f"{email_block(self.email)}\n\n<brief>\n{json.dumps(facts, indent=2)}\n</brief>"
-        text, status, notes = self.write_and_review(
-            "supplier-writer", writer_input, writer_input, "supplier", forbidden, "the supplier")
-        if text == NO_REPLY:
-            self.drafts.append((None, "no reply needed", "supplier"))
-            return {"status": "no reply needed"}
-        path = self.save_draft("supplier-reply.txt", [
-            f"To: {self.email['from_name']} <{self.email['sender']}>",
-            f"Subject: {reply_subject(self.email['subject'])}",
-            "From: Purchasing, Brookfield Bicycle Company",
-            f"In reply to: {self.email['path'].name}"], text, status, notes, "supplier")
-        return {"status": status, "saved_to": str(path.relative_to(REPO))}
-
-    # ----- customer notice --------------------------------------------------
-
-    def customer_notice(self, order_id):
-        order_id = str(order_id).strip().upper()
-        if self.brief is None:
-            raise ValueError("Run the supply analyst first: notices are written from its brief.")
-        if self.brief["options"]:
-            raise ValueError("The supplier offered options, so which orders are late depends on a "
-                             "choice a person must make first. No customer notices for this email.")
-        entry = next((o for o in self.brief["orders_at_risk"] if o["order_id"] == order_id), None)
-        if entry is None:
-            listed = ", ".join(o["order_id"] for o in self.brief["orders_at_risk"]) or "none"
-            raise ValueError(f"{order_id} is not in the brief's orders_at_risk ({listed}).")
-        if any(f == f"notice-{order_id}.txt" for f, _, _ in self.drafts):
-            raise ValueError(f"A notice for {order_id} was already drafted.")
-        facts = self.customer_facts(entry)
-        row = self.orders[order_id]
-        forbidden = {"penalt"}
-        for s in self.suppliers:
-            forbidden |= {s["supplier"], s["contact_name"], s["contact_email"]}
-        for other in self.orders.values():
-            if other["order_id"] != order_id and other["customer"] != row["customer"]:
-                forbidden |= {other["customer"], other["order_id"]}
-        print(f"{RULE}\nCustomer notice for {order_id}\n{RULE}")
-        facts_json = json.dumps(facts, indent=2)
-        text, status, notes = self.write_and_review(
-            "customer-writer", f"<order_facts>\n{facts_json}\n</order_facts>",
-            facts_json, "customer", forbidden, order_id)
-        path = self.save_draft(f"notice-{order_id}.txt", [
-            f"To: {row['customer']} <{row['contact_email']}>",
-            f"Subject: Update on your Brookfield order {order_id}",
-            "From: Customer Service, Brookfield Bicycle Company"], text, status, notes, "customer")
-        return {"order_id": order_id, "status": status, "saved_to": str(path.relative_to(REPO))}
-
-    # ----- end of the job ---------------------------------------------------
-
-    def finish(self, summary, needs_decision):
-        self.summary, self.needs_decision = summary, needs_decision
-        lines = [f"Coordinator: {self.coordinator}", f"Email: {self.email['path'].name}",
-                 f"Subject: {self.email['subject']}",
-                 f"A person needs to make a decision: {'yes' if needs_decision else 'no'}", "",
-                 "SUMMARY FOR THE PURCHASING MANAGER", summary, "", "DRAFTS"]
-        lines += [f"- {f or '(none)'} [{r}]: {s}" for f, s, r in self.drafts] or ["- none"]
-        lines += ["", "USAGE", self.usage.report()]
-        (self.run_dir / "summary.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
 async def call_mcp_tool(session, name, args):
     """Run one MCP tool. Returns (text, is_error). (From week 4.)"""
     result = await session.call_tool(name, args)
@@ -367,6 +178,391 @@ async def call_mcp_tool(session, name, args):
     if not text and getattr(result, "structured_content", None) is not None:
         text = json.dumps(result.structured_content)
     return text or "(empty result)", bool(getattr(result, "is_error", False))
+
+
+async def run_analyst(email, *, client=None, usage=None):
+    """The supply analyst agent. Returns its checked brief as a JSON object (a dict).
+
+    It stops after ANALYST_MAX_TOOL_CALLS tool calls: from then on it is called with
+    tool_choice "none", so it has to finish its brief with what it has."""
+    client, usage = _ctx(client, usage)
+    system = read_prompt("analyst")
+    coverage_results = []
+    calls = 0
+    server = StdioServerParameters(command=sys.executable, args=[str(SERVER_SCRIPT)],
+                                   cwd=str(REPO))
+    print(f"{RULE}\nSupply analyst ({SPECIALIST_MODEL}; MCP server: {SERVER_SCRIPT.name})\n{RULE}")
+    with open(SERVER_LOG, "a", encoding="utf-8") as errlog:
+        async with stdio_client(server, errlog=errlog) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                tools = [{"name": t.name, "description": t.description or "",
+                          "input_schema": t.input_schema}
+                         for t in (await session.list_tools()).tools]
+                names = {t["name"] for t in tools}
+                messages = [{"role": "user", "content": (
+                    "Days are counted from today (day 0). Prepare your brief for this "
+                    f"supplier email.\n\n{email_block(email)}")}]
+
+                for attempt in range(1, ANALYST_ATTEMPTS + 1):
+                    # The agent loop: runs until the analyst answers without a tool call.
+                    while True:
+                        out_of_calls = calls >= ANALYST_MAX_TOOL_CALLS
+                        response = ask_claude(
+                            client, usage, ANALYST, system, messages, tools,
+                            model=SPECIALIST_MODEL,
+                            tool_choice={"type": "none"} if out_of_calls else None)
+                        _print_tokens(ANALYST, response)
+                        messages.append({"role": "assistant", "content": response.content})
+                        if response.stop_reason != "tool_use":
+                            if response.stop_reason != "end_turn":
+                                why = STOP_REASONS.get(response.stop_reason, response.stop_reason)
+                                raise RuntimeError(f"The supply analyst {why}.")
+                            break
+                        results = []
+                        for block in response.content:
+                            if block.type != "tool_use":
+                                continue
+                            if calls >= ANALYST_MAX_TOOL_CALLS:
+                                text, is_error = "Tool-call limit reached; not run.", True
+                            elif block.name not in names:
+                                calls += 1
+                                text, is_error = f"Unknown tool: {block.name}", True
+                            else:
+                                calls += 1
+                                print(f"[{ANALYST}] tool call {calls}/{ANALYST_MAX_TOOL_CALLS}: "
+                                      f"{block.name} {json.dumps(block.input, ensure_ascii=False)}")
+                                try:
+                                    text, is_error = await call_mcp_tool(session, block.name, block.input)
+                                except Exception as exc:
+                                    text, is_error = f"Error: {exc}", True
+                                if block.name == "check_coverage" and not is_error:
+                                    coverage_results.append(json.loads(text))
+                                print(f"  result{' (error)' if is_error else ''}: {preview(text)}\n")
+                            results.append({"type": "tool_result", "tool_use_id": block.id,
+                                            "content": text, "is_error": is_error})
+                        if calls >= ANALYST_MAX_TOOL_CALLS:
+                            print(f"[{ANALYST}] reached {ANALYST_MAX_TOOL_CALLS} tool calls; "
+                                  "it must finish now.")
+                            results.append({"type": "text", "text": (
+                                f"You have used all {ANALYST_MAX_TOOL_CALLS} tool calls. Finish "
+                                "now with your JSON brief, using only the results you have.")})
+                        messages.append({"role": "user", "content": results})
+
+                    try:
+                        brief = check_brief(response_text(response), coverage_results)
+                        break
+                    except BriefError as exc:
+                        print(f"[{ANALYST}] brief rejected by code check: {exc}")
+                        if attempt == ANALYST_ATTEMPTS:
+                            raise RuntimeError(f"The analyst's brief failed the checks: {exc}")
+                        messages.append({"role": "user", "content": (
+                            f"Your brief failed a check: {exc} Fix it (you have "
+                            f"{max(0, ANALYST_MAX_TOOL_CALLS - calls)} tool calls left) and "
+                            "finish with only the corrected JSON brief.")})
+    print(f"[{ANALYST}] finished after {calls} tool call(s).")
+    return brief
+
+
+# ---------------------------------------------------------------------------
+# Specialist 2: the supplier writer
+# ---------------------------------------------------------------------------
+
+def _customer_terms():
+    """Customer names, order numbers, and contact addresses, longest first."""
+    terms = {}
+    for row in read_csv("orders.csv"):
+        terms[row["customer"]] = "a customer"
+        terms[row["order_id"]] = "an order"
+        terms[row["contact_email"]] = "a customer contact"
+    return sorted(terms.items(), key=lambda kv: -len(kv[0]))
+
+
+def remove_customers(value):
+    """Replace every customer name, order number, and contact address in value
+    (a string, or any JSON-like structure) with a neutral word."""
+    if isinstance(value, str):
+        for term, neutral in _customer_terms():
+            value = re.sub(re.escape(term), neutral, value, flags=re.IGNORECASE)
+        return value
+    if isinstance(value, list):
+        return [remove_customers(v) for v in value]
+    if isinstance(value, dict):
+        return {k: remove_customers(v) for k, v in value.items()}
+    return value
+
+
+def supplier_brief(brief):
+    """What the supplier writer may see: totals, not orders, with customers removed."""
+    if brief is None:
+        return {"note": "No supply analysis was run for this email."}
+    risk = brief["orders_at_risk"]
+    late = [o["days_late"] for o in risk if o["days_late"] is not None]
+    return remove_customers({
+        "part_id": brief["part_id"],
+        "what_changed": brief["what_changed"],
+        "orders_delayed": len(risk),
+        "total_units_short": sum(o["units_short"] for o in risk),
+        "days_late_range": [min(late), max(late)] if late else None,
+        "options": [{"name": o.get("name"), "orders_delayed": len(o["order_ids"])}
+                    for o in brief["options"]],
+        "decisions_for_a_person": brief["decisions_for_a_person"],
+        "supplier_questions": brief["supplier_questions"],
+    })
+
+
+def supplier_writer_input(email, brief):
+    """The supplier writer's input, with all customer names removed. The reviewer checks
+    the draft against exactly this."""
+    return (f"{remove_customers(email_block(email))}\n\n<brief>\n"
+            f"{json.dumps(supplier_brief(brief), indent=2)}\n</brief>")
+
+
+def write_supplier_reply(email, brief, *, previous=None, feedback=None, client=None, usage=None):
+    """One model call: a reply to the supplier. With previous and feedback, a revision."""
+    client, usage = _ctx(client, usage)
+    text = supplier_writer_input(email, brief)
+    text += revision_request(previous, feedback)
+    return _one_call(client, usage, SUPPLIER_WRITER, "supplier-writer", text)
+
+
+# ---------------------------------------------------------------------------
+# Specialist 3: the customer writer
+# ---------------------------------------------------------------------------
+
+def customer_facts(order):
+    """Only this order's facts, from the analyst's checked brief. No supplier, no penalty."""
+    return {
+        "customer": order["customer"],
+        "order_id": order["order_id"],
+        "model": order["model"],
+        "quantity": order["bikes"],
+        "planned_ship_in_days": order["ship_day"],
+        "days_later_than_planned": (order["days_late"] if order["days_late"] is not None
+                                    else "not yet known"),
+    }
+
+
+def write_customer_notice(order, *, previous=None, feedback=None, client=None, usage=None):
+    """One model call: a notice to the customer of this one order."""
+    client, usage = _ctx(client, usage)
+    text = f"<order_facts>\n{json.dumps(customer_facts(order), indent=2)}\n</order_facts>"
+    text += revision_request(previous, feedback)
+    return _one_call(client, usage, CUSTOMER_WRITER, "customer-writer", text)
+
+
+def revision_request(previous, feedback):
+    if previous is None:
+        return ("\n\nWrite only the body of the email, ready for a person to check and send, "
+                "with no notes before or after it.")
+    return (f"\n\n<previous_draft>\n{previous}\n</previous_draft>\n\n<reviewer_feedback>\n"
+            f"{feedback}\n</reviewer_feedback>\n\nWrite the full revised email, fixing every "
+            "point the reviewer raised. Output only the email itself, with no notes.")
+
+
+# ---------------------------------------------------------------------------
+# Specialist 4: the reviewer
+# ---------------------------------------------------------------------------
+
+def review(draft, facts, recipient, *, client=None, usage=None):
+    """One model call. Returns {"verdict": "APPROVE" or "REVISE", "reasons": text}."""
+    client, usage = _ctx(client, usage)
+    text = _one_call(client, usage, REVIEWER, "reviewer", (
+        f"Recipient: {recipient}\n\n<facts>\n{facts}\n</facts>\n\n<draft>\n{draft}\n</draft>"))
+    first = next((line.strip().strip("*#").strip().upper()
+                  for line in text.splitlines() if line.strip()), "")
+    verdict = "APPROVE" if first.startswith("APPROVE") else "REVISE"  # unclear counts as REVISE
+    return {"verdict": verdict, "reasons": text}
+
+
+# ---------------------------------------------------------------------------
+# The review step and the code checks
+# ---------------------------------------------------------------------------
+
+def find_names(text, names):
+    lowered = text.lower()
+    return sorted({n for n in names if n and n.lower() in lowered})
+
+
+def customer_names():
+    return {row["customer"] for row in read_csv("orders.csv")}
+
+
+def supplier_names():
+    """Supplier names, their short names (Northgate, Keystone, ...), and contact names."""
+    names = set()
+    for s in read_csv("suppliers.csv"):
+        names |= {s["supplier"], s["supplier"].split()[0], s["contact_name"]}
+    return names
+
+
+def reviewed_draft(writer, write, facts, recipient, label, late_penalty=False, *,
+                   coordinator="coordinator", client=None, usage=None, extra_reasons=()):
+    """Draft with write(previous, feedback), review, revise at most MAX_REVISIONS times,
+    then check the final draft in code. Returns a dict describing the outcome."""
+    handoff(coordinator, writer, f"write the {recipient} draft for {label}", facts)
+    draft = write(None, None)
+    if draft.strip().upper() == NO_REPLY:
+        handoff(writer, coordinator, "no reply needed")
+        return {"draft": NO_REPLY, "verdict": "no reply needed", "revisions": 0, "notes": [],
+                "needs_person": False, "reasons": []}
+
+    notes, revisions = [], 0
+    while True:
+        handoff(writer, REVIEWER, f"draft {revisions + 1} for {label}", draft)
+        result = review(draft, facts, recipient, client=client, usage=usage)
+        notes.append(f"Draft {revisions + 1}: {result['verdict']}\n{result['reasons']}")
+        if result["verdict"] == "APPROVE" or revisions == MAX_REVISIONS:
+            break
+        handoff(REVIEWER, writer, f"REVISE draft {revisions + 1}", result["reasons"])
+        draft = write(draft, result["reasons"])
+        revisions += 1
+    handoff(REVIEWER, coordinator, f"{result['verdict']} after {revisions} revision(s)",
+            result["reasons"])
+
+    # Code checks on the final draft. These mark the draft; they don't rewrite it.
+    if recipient == "supplier":
+        leaks = find_names(draft, customer_names())
+        leak_reason = "names a customer: "
+    else:
+        leaks = find_names(draft, supplier_names())
+        leak_reason = "names a supplier: "
+    reasons = []
+    if result["verdict"] != "APPROVE":
+        reasons.append(f"the reviewer did not approve it after {MAX_REVISIONS} revisions")
+    if leaks:
+        reasons.append(leak_reason + ", ".join(leaks))
+    if late_penalty:
+        reasons.append("an order with a late penalty is affected")
+    reasons.extend(extra_reasons)
+    print(f"[code check] {label}: " + ("names check failed - " + ", ".join(leaks)
+                                       if leaks else "names check passed"))
+    return {"draft": draft, "verdict": result["verdict"], "revisions": revisions,
+            "notes": notes, "needs_person": bool(reasons), "reasons": reasons}
+
+
+# ---------------------------------------------------------------------------
+# One job, for the coordinators
+# ---------------------------------------------------------------------------
+
+class TeamRun:
+    def __init__(self, client, email, coordinator):
+        self.client = client
+        self.email = email
+        self.coordinator = coordinator
+        self.usage = Usage()
+        self.brief = None
+        self.supplier_done = False
+        self.drafts = []      # dicts: file, recipient, status, needs_person, reasons
+        self.summary = None
+        self.needs_decision = None
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.run_dir = DRAFTS_DIR / f"{stamp}-{coordinator}-{email['path'].stem}"
+        self.run_dir.mkdir(parents=True, exist_ok=True)
+        self.orders = {o["order_id"]: o for o in read_csv("orders.csv")}
+
+    async def analyst(self):
+        if self.brief is None:
+            handoff(self.coordinator, ANALYST, f"analyze {self.email['path'].name}",
+                    email_block(self.email))
+            self.brief = await run_analyst(self.email, client=self.client, usage=self.usage)
+            (self.run_dir / "brief.json").write_text(json.dumps(self.brief, indent=2),
+                                                     encoding="utf-8")
+            handoff(ANALYST, self.coordinator, "brief", self.brief)
+        return self.brief
+
+    def save_draft(self, filename, header, outcome, recipient):
+        flag = ("YES - " + "; ".join(outcome["reasons"])) if outcome["needs_person"] else "no"
+        status = (f"{outcome['verdict']} after {outcome['revisions']} revision(s)")
+        body = "\n".join(header + [
+            f"Needs a person: {flag}", f"Review: {status}", "Status: draft only - not sent",
+            "", "DRAFT", outcome["draft"], "", "REVIEW NOTES", *outcome["notes"]]) + "\n"
+        (self.run_dir / filename).write_text(body, encoding="utf-8")
+        record = {"file": filename, "recipient": recipient, "status": status,
+                  "needs_person": outcome["needs_person"], "reasons": outcome["reasons"],
+                  "saved_to": str((self.run_dir / filename).relative_to(REPO))}
+        self.drafts.append(record)
+        return record
+
+    def supplier_reply(self):
+        if self.supplier_done:
+            raise ValueError("A supplier reply was already drafted for this email.")
+        self.supplier_done = True
+        print(f"{RULE}\nSupplier reply\n{RULE}")
+        penalty = any(o["late_penalty"] for o in (self.brief or {}).get("orders_at_risk", []))
+        outcome = reviewed_draft(
+            SUPPLIER_WRITER,
+            lambda prev, fb: write_supplier_reply(self.email, self.brief, previous=prev,
+                                                  feedback=fb, client=self.client, usage=self.usage),
+            supplier_writer_input(self.email, self.brief), "supplier", "the supplier", penalty,
+            coordinator=self.coordinator, client=self.client, usage=self.usage)
+        if outcome["draft"] == NO_REPLY:
+            self.drafts.append({"file": None, "recipient": "supplier", "status": "no reply needed",
+                                "needs_person": False, "reasons": []})
+            return {"status": "no reply needed"}
+        return self.save_draft("supplier-reply.txt", [
+            f"To: {self.email['from_name']} <{self.email['sender']}>",
+            f"Subject: {reply_subject(self.email['subject'])}",
+            "From: Purchasing, Brookfield Bicycle Company",
+            f"In reply to: {self.email['path'].name}"], outcome, "supplier")
+
+    def customer_notice(self, order_id):
+        order_id = str(order_id).strip().upper()
+        if self.brief is None:
+            raise ValueError("Run the supply analyst first: notices are written from its brief.")
+        order = next((o for o in self.brief["orders_at_risk"] if o["order_id"] == order_id), None)
+        if order is None:
+            listed = ", ".join(o["order_id"] for o in self.brief["orders_at_risk"]) or "none"
+            raise ValueError(f"{order_id} is not in the brief's orders_at_risk ({listed}).")
+        if any(d["file"] == f"notice-{order_id}.txt" for d in self.drafts):
+            raise ValueError(f"A notice for {order_id} was already drafted.")
+        # When the supplier offers options, whether this order is late depends on the choice,
+        # so the notice is always marked for a person, naming the options that delay it.
+        extra = []
+        if self.brief["options"]:
+            delaying = [str(o.get("name")) for o in self.brief["options"]
+                        if order_id in [str(i).strip() for i in o["order_ids"]]]
+            extra.append("depends on which option is chosen (late only under "
+                         f"{' and '.join(delaying) or 'none of the options'}; the notice uses "
+                         "the analyst's numbers for that case)")
+        print(f"{RULE}\nCustomer notice for {order_id}\n{RULE}")
+        outcome = reviewed_draft(
+            CUSTOMER_WRITER,
+            lambda prev, fb: write_customer_notice(order, previous=prev, feedback=fb,
+                                                   client=self.client, usage=self.usage),
+            json.dumps(customer_facts(order), indent=2), "customer", order_id,
+            order["late_penalty"], coordinator=self.coordinator, client=self.client,
+            usage=self.usage, extra_reasons=extra)
+        row = self.orders[order_id]
+        return self.save_draft(f"notice-{order_id}.txt", [
+            f"To: {row['customer']} <{row['contact_email']}>",
+            f"Subject: Update on your Brookfield order {order_id}",
+            "From: Customer Service, Brookfield Bicycle Company"], outcome, "customer")
+
+    def result_lines(self):
+        """The end-of-run summary: drafts saved, drafts marked for a person, decisions for
+        a person, and tokens. Printed at the end and saved as summary.txt."""
+        saved = [d for d in self.drafts if d["file"]]
+        marked = [d for d in saved if d["needs_person"]]
+        decisions = (self.brief or {}).get("decisions_for_a_person", [])
+        tin, tout = self.usage.totals()
+        lines = [f"Drafts saved ({len(saved)}) - nothing was sent:"]
+        lines += [f"  - {d['file']} [{d['recipient']}]: {d['status']}" for d in saved] or ["  - none"]
+        lines += ["", f"Drafts marked for a person ({len(marked)}):"]
+        lines += [f"  - {d['file']}: {'; '.join(d['reasons'])}" for d in marked] or ["  - none"]
+        lines += ["", f"Decisions for a person ({len(decisions)}):"]
+        lines += [f"  - {d}" for d in decisions] or ["  - none"]
+        lines += ["", f"Total tokens: {tin + tout:,} ({tin:,} input + {tout:,} output)",
+                  "", self.usage.report()]
+        return lines
+
+    def finish(self, summary, needs_decision):
+        self.summary, self.needs_decision = summary, needs_decision
+        lines = [f"Coordinator: {self.coordinator}", f"Email: {self.email['path'].name}",
+                 f"Subject: {self.email['subject']}",
+                 f"A person needs to make a decision: {'yes' if needs_decision else 'no'}", "",
+                 "SUMMARY FOR THE PURCHASING MANAGER", summary, "", *self.result_lines()]
+        (self.run_dir / "summary.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -397,17 +593,13 @@ def run_coordinator(name, description, coordinate):
         email = parse_email(args.email)
         team = TeamRun(anthropic.Anthropic(api_key=load_api_key()), email, name)
         print(f"Coordinator: {name}\nEmail: {email['path'].name}\nFrom: {email['sender']}\n"
-              f"Subject: {email['subject']}\nRun folder: {team.run_dir.relative_to(REPO)}\n")
+              f"Subject: {email['subject']}\nSpecialist model: {SPECIALIST_MODEL}\n"
+              f"Run folder: {team.run_dir.relative_to(REPO)}\n")
         asyncio.run(coordinate(team))
-        print(f"{RULE}\nRESULT ({name})\n{RULE}")
-        print(f"Needs a decision by a person: {'yes' if team.needs_decision else 'no'}")
-        print(f"Summary: {team.summary}\n")
-        print("Drafts (nothing was sent):")
-        for f, s, r in team.drafts:
-            print(f"  {f or '(none)'} [{r}]: {s}")
-        if not team.drafts:
-            print("  none")
-        print(f"\nSaved in {team.run_dir.relative_to(REPO)}\n\n{team.usage.report()}")
+        print(f"{RULE}\nSUMMARY ({name})\n{RULE}")
+        print(f"{team.summary}\n")
+        print("\n".join(team.result_lines()))
+        print(f"\nDrafts folder: {team.run_dir.relative_to(REPO)}")
     except KeyboardInterrupt:
         print("\nStopped by Ctrl+C.", file=sys.stderr)
         code = 130

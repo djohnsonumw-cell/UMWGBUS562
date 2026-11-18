@@ -1,0 +1,48 @@
+{
+  "part_id": "MC-500",
+  "what_changed": "Of the 400-unit PO-7781, only 120 will arrive on day 5 as originally scheduled, with the remaining 280 delayed to day 26 (three weeks later).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-1043",
+      "customer": "City of Ashford Bike Share",
+      "model": "Commuter E",
+      "bikes": 100,
+      "units_short": 10,
+      "ship_day": 14,
+      "ready_day": 26,
+      "days_late": 12,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-1044",
+      "customer": "Main Street Bikes",
+      "model": "Cargo E",
+      "bikes": 30,
+      "units_short": 30,
+      "ship_day": 18,
+      "ready_day": 26,
+      "days_late": 8,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-1045",
+      "customer": "Lakeview Rentals",
+      "model": "Commuter E",
+      "bikes": 50,
+      "units_short": 50,
+      "ship_day": 21,
+      "ready_day": 26,
+      "days_late": 5,
+      "late_penalty": false
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide whether to expedite or source part of the 280-unit shortfall elsewhere to protect O-1043 (City of Ashford Bike Share), which carries a late penalty and would otherwise ship 12 days late.",
+    "Decide whether to accept the delays for O-1044 and O-1045 (no late penalty) or negotiate priority with Northgate for these customers.",
+    "Consider discussing alternative options with Karen Walsh this week, as she offered, since the email itself proposes no concrete alternatives yet."
+  ],
+  "supplier_questions": [
+    "Which of Brookfield's customers are most affected by the delay?"
+  ]
+}

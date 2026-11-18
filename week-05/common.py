@@ -27,6 +27,9 @@ EFFORT = "medium"
 MAX_TOKENS = 16000
 # If a safety classifier declines a request, the API retries it on a fallback model.
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
+# Server-side fallbacks are only offered for these models (not, e.g., claude-sonnet-5).
+FALLBACK_MODELS = {"claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5",
+                   "claude-fable-5-2", "claude-fable-5-1"}
 PREVIEW_CHARS = 300
 RULE = "=" * 70
 
@@ -125,6 +128,10 @@ class Usage:
         row[1] += response.usage.input_tokens
         row[2] += response.usage.output_tokens
 
+    def totals(self):
+        """(input tokens, output tokens) across all agents."""
+        return (sum(r[1] for r in self.rows.values()), sum(r[2] for r in self.rows.values()))
+
     def report(self):
         lines = [f"{'Agent':18} {'API calls':>9} {'Input tokens':>13} {'Output tokens':>14}"]
         totals = [0, 0, 0]
@@ -135,15 +142,18 @@ class Usage:
         return "\n".join(lines)
 
 
-def ask_claude(client, usage, agent, system, messages, tools=None):
+def ask_claude(client, usage, agent, system, messages, tools=None, model=MODEL,
+               tool_choice=None):
     """One Messages API call. Returns the response (content is appended by the caller)."""
     kwargs = {"tools": tools} if tools else {}
+    if tool_choice:
+        kwargs["tool_choice"] = tool_choice
+    if model in FALLBACK_MODELS:
+        kwargs.update(betas=[FALLBACK_BETA], fallbacks="default")
     response = client.beta.messages.create(
-        model=MODEL,
+        model=model,
         max_tokens=MAX_TOKENS,
         output_config={"effort": EFFORT},
-        betas=[FALLBACK_BETA],
-        fallbacks="default",
         system=system,
         messages=messages,
         **kwargs,
@@ -156,9 +166,9 @@ def response_text(response):
     return "".join(b.text for b in response.content if b.type == "text").strip()
 
 
-def single_turn(client, usage, agent, system, messages):
+def single_turn(client, usage, agent, system, messages, model=MODEL):
     """A call with no tools. Returns the text; exits the step with an error if Claude didn't finish."""
-    response = ask_claude(client, usage, agent, system, messages)
+    response = ask_claude(client, usage, agent, system, messages, model=model)
     messages.append({"role": "assistant", "content": response.content})
     if response.stop_reason != "end_turn":
         raise RuntimeError(f"{agent} {STOP_REASONS.get(response.stop_reason, response.stop_reason)}.")
