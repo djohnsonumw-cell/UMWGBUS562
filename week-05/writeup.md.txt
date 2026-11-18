@@ -1,0 +1,250 @@
+## What I Built
+
+I built an AI team (Supply analyst, Supply writer, Customer writer, and reviewer) using two coordinators that draft email responses to suppliers. If a supplier writes an email about a purchase order, the AI team works out which customer orders are affected and drafts replies which is checked before it is sent. I tested it on Copperline Coffee Machines by making changes such as adding a --org option, using generic names, etc.
+
+## Why This Approach
+
+Task A: One call because the AI is able to read emails, look up the needed details, and draft a reply. An agent can assist with this as well but would cost more therefore One call would be a better option. 
+
+Task B: Team because this is a bigger task which may require multiple agents to take on different roles such as finding machines, draft notices, draft reports, and making deciding coordinators fit for the tasks based on given information. This would be too much for one agent to handle. 
+
+Task C: Script because it is the same steps therefore it can follow commands that was written for it. It would be a waste of money to use AI or an agent. 
+
+Task D: Team because this task requires a mix of specialists due to the different categories of emails that are being received in Copperline's email.
+
+## Example Run
+
+Company: Copperline Coffee Machines (week-05\copperline-coffee)
+Coordinator: pipeline
+Email: 03-ashgrove-burr-delay.eml
+From: p.raman@ashgroveprecision.example
+Subject: PO-5531 - BR-64 burr sets - arriving 3 days late
+Specialist model: claude-sonnet-5
+Run folder: week-05\drafts\copperline-coffee\20261117-231419-pipeline-03-ashgrove-burr-delay
+
+======================================================================
+STEP 1 of 3: supply analyst
+======================================================================
+
+>>> HANDOFF: pipeline -> supply analyst: analyze 03-ashgrove-burr-delay.eml
+    <email>
+    From: Priya Raman <p.raman@ashgroveprecision.example>
+    Subject: PO-5531 - BR-64 burr sets - arriving 3 days late
+    
+    Hello,
+    
+    A heat-treatment furnace at our plant needed an unplanned repair, so PO-5531
+    for 120 BR-64 burr sets will arrive 3 days after the scheduled date. The full
+    quantity will ship together.
+    
+    Please let me know if this causes any problems on your side.
+    
+    Best,
+    Priya Raman
+    Order Management, Ashgrove Precision
+    </email>
+======================================================================
+Supply analyst (claude-sonnet-5; MCP server: supply_mcp_server.py)
+======================================================================
+    [supply analyst] tokens this call: 1,802 in, 145 out
+[supply analyst] tool call 1/10: get_part {"part_id": "BR-64"}
+  result: {
+  "part_id": "BR-64",
+  "description": "64 mm burr set",
+  "supplier": "Ashgrove Precision",
+  "on_hand": 70,
+  "scheduled_shipments": [
+    {
+      "po_number": "PO-5531",
+      "supplier": "Ashgrove Precision",
+      "qty": 120,
+      "day": 10
+    }
+  ],
+  "used_in": [
+    {
+      "product": "G...
+
+[supply analyst] tool call 2/10: get_orders_for_part {"part_id": "BR-64"}
+  result: {
+  "part_id": "BR-64",
+  "orders": [
+    {
+      "order_id": "O-2206",
+      "customer": "Grindstone Coffee Bar",
+      "product": "Grinder 64",
+      "quantity": 30,
+      "units_needed": 30,
+      "ship_day": 8,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-2207",
+      "customer"...
+
+    [supply analyst] tokens this call: 2,484 in, 93 out
+[supply analyst] tool call 3/10: check_coverage {"part_id": "BR-64", "arrivals": [{"qty": 120, "day": 13}]}
+  result: {
+  "part_id": "BR-64",
+  "on_hand": 70,
+  "arrivals_used": [
+    {
+      "qty": 120,
+      "day": 13
+    }
+  ],
+  "replaced_schedule": [
+    {
+      "qty": 120,
+      "day": 10
+    }
+  ],
+  "total_units_needed": 115,
+  "total_units_available": 190,
+  "orders": [
+    {
+      "order_id": "O-2206",
+  ...
+
+    [supply analyst] tokens this call: 3,121 in, 156 out
+[supply analyst] finished after 3 tool call(s).
+[slack check] The new BR-64 schedule can slip 1 more day with no order late. At 2 more days, O-2207 (Union Market Grocers, late penalty) would be 20 units short.
+
+>>> HANDOFF: supply analyst -> pipeline: brief (in full below)
+ANALYST'S BRIEF
+{
+  "part_id": "BR-64",
+  "what_changed": "PO-5531 (120 BR-64 burr sets), originally scheduled for day 10, will now arrive on day 13.",
+  "orders_at_risk": [],
+  "options": [],
+  "decisions_for_a_person": [],
+  "supplier_questions": [
+    "Let Priya Raman know if the 3-day delay causes any problems on Copperline's side."
+  ],
+  "slack": {
+    "part_id": "BR-64",
+    "extra_days": 1,
+    "first_order_affected": {
+      "order_id": "O-2207",
+      "customer": "Union Market Grocers",
+      "late_penalty": true,
+      "units_short": 20
+    },
+    "note": "The new BR-64 schedule can slip 1 more day with no order late. At 2 more days, O-2207 (Union Market Grocers, late penalty) would be 20 units short."
+  }
+}
+END OF BRIEF
+
+======================================================================
+STEP 2 of 3: customer notices
+======================================================================
+Skipped: no orders are at risk.
+======================================================================
+STEP 3 of 3: supplier reply
+======================================================================
+======================================================================
+Supplier reply
+======================================================================
+
+>>> HANDOFF: pipeline -> supplier writer: write the supplier draft for the supplier
+    <email>
+    From: Priya Raman <p.raman@ashgroveprecision.example>
+    Subject: PO-5531 - BR-64 burr sets - arriving 3 days late
+    
+    Hello,
+    
+    A heat-treatment furnace at our plant needed an unplanned repair, so PO-5531
+    for 120 BR-64 burr sets will arrive 3 days after the scheduled date. The full
+    quantity will ship together.
+    
+    Please let me know if this causes any problems on your side.
+    
+    Best,
+    Priya Raman
+    Order Management, Ashgrove Precision
+    </email>
+    
+    <brief>
+    {
+      "part_id": "BR-64",
+      "what_changed": "PO-5531 (120 BR-64 burr sets), originally scheduled for day 10, will now arrive on day 13.",
+      "impact": {
+        "orders_delayed": 0,
+        "units_short": 0,
+        "days_late_range": null
+      },
+      "new_date_is_tight": true,
+      "decisions_for_a_person": [],
+      "supplier_questions": [
+        "Let Priya Raman know if the 3-day delay causes any problems on Copperline's side."
+      ],
+      "dates": {
+        "today (day 0)": "Tuesday, November 17, 2026",
+        "day 10": "Friday, November 27, 2026",
+        "day 13": "Monday, November 30, 2026"
+      }
+    }
+    </brief>
+    [supplier writer] tokens this call: 887 in, 176 out
+
+>>> HANDOFF: supplier writer -> reviewer: draft 1 for the supplier
+    Hello Priya,
+    
+    Thank you for the update. We confirm PO-5531 (120 BR-64 burr sets) is now expected on Monday, November 30, 2026, instead of Friday, November 27, 2026. Based on what we have scheduled, this does not cause any shortages or delays on our end.
+    
+    That said, this new date is tight for us, so please hold Monday, November 30, 2026 as firm, and let us know right away if there is any risk of it slipping further.
+    
+    Best regards,
+    Purchasing, Copperline Coffee Machines
+    [reviewer] tokens this call: 1,083 in, 7 out
+
+>>> HANDOFF: reviewer -> pipeline: APPROVE after 0 revision(s)
+    APPROVE
+[code check] the supplier: names check passed
+
+FINAL DRAFT TO SUPPLIER
+Hello Priya,
+
+Thank you for the update. We confirm PO-5531 (120 BR-64 burr sets) is now expected on Monday, November 30, 2026, instead of Friday, November 27, 2026. Based on what we have scheduled, this does not cause any shortages or delays on our end.
+
+That said, this new date is tight for us, so please hold Monday, November 30, 2026 as firm, and let us know right away if there is any risk of it slipping further.
+
+Best regards,
+Purchasing, Copperline Coffee Machines
+Marked for a person: no
+
+======================================================================
+SUMMARY (pipeline)
+======================================================================
+PO-5531 (120 BR-64 burr sets), originally scheduled for day 10, will now arrive on day 13. No customer orders are at risk. The new BR-64 schedule can slip 1 more day with no order late. At 2 more days, O-2207 (Union Market Grocers, late penalty) would be 20 units short.
+
+Drafts saved (1) - nothing was sent:
+  - supplier-reply.txt [supplier]: Reply to Priya Raman. The writer was given totals only (0 order(s) delayed, 0 units short), with no customer names or order numbers. Code check: names no customer; reviewer: APPROVE after 0 revision(s).
+
+Drafts marked for a person (0):
+  - none
+
+Decisions for a person (0):
+  - none
+
+Watch: The new BR-64 schedule can slip 1 more day with no order late. At 2 more days, O-2207 (Union Market Grocers, late penalty) would be 20 units short.
+
+Total tokens: 9,954 (9,377 input + 577 output)
+
+Agent              API calls  Input tokens  Output tokens
+supply analyst             3         7,407            394
+supplier writer            1           887            176
+reviewer                   1         1,083              7
+Total                      5         9,377            577
+
+Drafts folder: week-05\drafts\copperline-coffee\20261117-231419-pipeline-03-ashgrove-burr-delay
+
+## Reflection
+
+Email 1 reading: Matches. Diane says the other 160 pumps "will follow 15 days later," and the what_changed line in the latest saved pipeline run says 40 arrive on day 4 and the other 160 arrive on day 19, which is 15 days later. The brief gave day 19 for the 160.
+
+Email 1 customer names: No. The reply turned down Diane's request. It says Copperline is "not able to share customer names or order details" and gives only totals instead, 3 orders affected, 55 units short.
+
+Email 4 orchestrator: None. Both saved orchestrator runs for Email 4 made one orchestrator call and stopped there. They drafted nothing, and the latest run notes that the supply analyst never checked the data. With the same email, the pipeline ran the supply analyst (3 calls), the supplier writer and the reviewer. It found no orders at risk and no decisions for a person, and saved one short reply to Owen confirming PO-5540 is on schedule. The reviewer approved it with no revisions, and nothing was sent. 
+
+
